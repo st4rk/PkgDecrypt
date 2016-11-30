@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 		AES_KEY key;
 
-		FILE *content = fopen("out.bin", "rwb");
+		FILE *content = fopen("out.bin", "wb+");
 
 		/**
 		 * encrypt PKG Key with AES_Key to generate the CTR Key
