@@ -1,5 +1,5 @@
 # PkgDecrypt
-Decrypts PS Vita PKG files
+Decrypt and extract PS Vita PKG files
 
 # Dependencies
 OpenSSL
