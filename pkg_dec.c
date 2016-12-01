@@ -50,7 +50,7 @@ typedef struct PKG_FILE_HEADER {
 int main(int argc, char **argv) {
 	FILE *pkg = NULL;
 
-	if (argc > 1) {
+	if (argc == 3) {
 		pkg = fopen(argv[1], "rb");
 
 		if (pkg == NULL) {
@@ -118,7 +118,6 @@ int main(int argc, char **argv) {
 		/* decrypt chunks */
 		unsigned char buffer[AES_BLOCK_SIZE];
 		unsigned char out[AES_BLOCK_SIZE];
-		int bytesOut = 0;
 		ctr d_ctr;	
 
 		memcpy(d_ctr.iv, pkg_key, AES_BLOCK_SIZE);
@@ -153,9 +152,13 @@ int main(int argc, char **argv) {
 
 		/** create out directory */
 		struct stat st = {0};
-		if (stat("out", &st) == -1) {
-			mkdir("out", 0777);
+		if (stat(argv[2], &st) == -1) {
+			mkdir(argv[2], 0777);
 		}
+		
+		char* extraName;
+		extraName = strcat(argv[2],"/%s\0\n");
+		printf("extraName: %s\n", extraName);
 
 		for (int i = 0; i < itemCnt; i++) {
 			switch ((__builtin_bswap32(fileEntry[i].flags) & 0xFF)) {
@@ -164,6 +167,7 @@ int main(int argc, char **argv) {
 				case 18: {
 					char dirName[0xFF];
 					char fileName[0xFF];
+					
 					memset(dirName, 0, 0xFF);
 					memset(fileName, 0, 0xFF);
 					struct stat st = {0};
@@ -171,7 +175,8 @@ int main(int argc, char **argv) {
 					/** read file name */
 					fseek(content, __builtin_bswap32(fileEntry[i].filename_offset), SEEK_SET);
 					fread(fileName, sizeof(char), __builtin_bswap32(fileEntry[i].filename_size), content);
-					sprintf(dirName, "out/%s\0\n", fileName);
+					sprintf(dirName, extraName , fileName);
+					printf("fileName: %s\n", dirName);
 
 					if (stat(dirName, &st) == -1) {
 						mkdir(dirName, 0777);
@@ -201,7 +206,8 @@ int main(int argc, char **argv) {
 					fseek(content, __builtin_bswap32(fileEntry[i].filename_offset), SEEK_SET);
 					fread(fileName, sizeof(char), __builtin_bswap32(fileEntry[i].filename_size), content);
 
-					sprintf(dirName, "out/%s\0\n", fileName);
+					sprintf(dirName, extraName, fileName);
+					printf("fileName: %s\n", dirName);
 					temp = fopen(dirName, "wb");
 					
 					data = (unsigned char*) malloc (sizeof(unsigned char) * __builtin_bswap64(fileEntry[i].data_size));
@@ -230,7 +236,7 @@ int main(int argc, char **argv) {
 		fclose(content);
 		fclose(pkg);
 	} else {
-		printf("Usage: pkg filename.pkg\n");
+		printf("Usage: pkg_dec filename.pkg output_directory \n");
 		printf("out.bin is the package decrypted and out folder\nhas the files inside of out.bin\n");
 	}
 
