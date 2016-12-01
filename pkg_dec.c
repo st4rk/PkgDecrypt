@@ -158,7 +158,6 @@ int main(int argc, char **argv) {
 		
 		char* extraName;
 		extraName = strcat(argv[2],"/%s\0\n");
-		printf("extraName: %s\n", extraName);
 
 		for (int i = 0; i < itemCnt; i++) {
 			switch ((__builtin_bswap32(fileEntry[i].flags) & 0xFF)) {
@@ -176,7 +175,7 @@ int main(int argc, char **argv) {
 					fseek(content, __builtin_bswap32(fileEntry[i].filename_offset), SEEK_SET);
 					fread(fileName, sizeof(char), __builtin_bswap32(fileEntry[i].filename_size), content);
 					sprintf(dirName, extraName , fileName);
-					printf("fileName: %s\n", dirName);
+					printf("dirName: %s\n", dirName);
 
 					if (stat(dirName, &st) == -1) {
 						mkdir(dirName, 0777);
