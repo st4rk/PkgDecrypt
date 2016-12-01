@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall
+CFLAGS=-Wall -std=c99
 LDFLAGS=-lcrypto
 SOURCES=pkg_dec.c
 EXECUTABLE=pkg_dec
