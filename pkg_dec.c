@@ -13,19 +13,19 @@
 #include <sys/stat.h>
 #include <openssl/aes.h>
 
-unsigned char pkg_key_psp[] = {
+const unsigned char pkg_key_psp[] = {
 	0x07, 0xF2, 0xC6, 0x82, 0x90, 0xB5, 0x0D, 0x2C, 0x33, 0x81, 0x8D, 0x70, 0x9B, 0x60, 0xE6, 0x2B
 };
 
-unsigned char pkg_vita_2[] = {
+const unsigned char pkg_vita_2[] = {
 	0xE3, 0x1A, 0x70, 0xC9, 0xCE, 0x1D, 0xD7, 0x2B, 0xF3, 0xC0, 0x62, 0x29, 0x63, 0xF2, 0xEC, 0xCB
 };
 
-unsigned char pkg_vita_3[] = {
+const unsigned char pkg_vita_3[] = {
 	0x42, 0x3A, 0xCA, 0x3A, 0x2B, 0xD5, 0x64, 0x9F, 0x96, 0x86, 0xAB, 0xAD, 0x6F, 0xD8, 0x80, 0x1F
 };
 
-unsigned char pkg_vita_4[] = {
+const unsigned char pkg_vita_4[] = {
 	0xAF, 0x07, 0xFD, 0x59, 0x65, 0x25, 0x27, 0xBA, 0xF1, 0x33, 0x89, 0x66, 0x8B, 0x17, 0xD9, 0xEA
 };
 
@@ -57,6 +57,87 @@ int main(int argc, char **argv) {
 			printf("PKG %s not found !\n", argv[1]);
 			return 0;
 		}
+
+		/**
+		 * Dump tail.bin, head.bin
+		 */
+		// <-- tail.bin
+		unsigned int pkgSize = 0;
+		unsigned char *aux_1 = NULL;
+		FILE *aux_2 = NULL;
+
+		// <-- calculate the size of pkg file
+		fseek(pkg, 0L, SEEK_END);
+		pkgSize = ftell(pkg);
+		rewind(pkg);
+		fseek(pkg, pkgSize-480, SEEK_SET);
+		
+		// <-- allocate enough memory to tail.bin
+		aux_1 = (unsigned char*) malloc(sizeof(unsigned char) * 480); // 480 bytes
+
+		// <-- read tail into buffer
+		fread(aux_1, 1, 480, pkg);
+		printf("Saving tail.bin...\n");
+
+		// <-- write tail.bin into the file
+		aux_2 = fopen("tail.bin", "wb");
+		fwrite(aux_1, sizeof(unsigned char), 480, aux_2);
+
+		// <-- free memory and close the file descriptors
+		free(aux_1);
+		fclose(aux_2);
+
+		// <-- now allocate enough memory to head.bin (I will allocate around ~50Kbytes, but I'm really sure)
+		// <-- that it's not the right size, I will do some research to know the exactly size used ;)
+		aux_1 = (unsigned char*) malloc(sizeof(unsigned char) * 0xA960);
+
+		// <-- set the fd to beginning
+		fseek(pkg, 0L, SEEK_SET);
+
+		// <-- read 0xA960 bytes into the buffer
+		fread(aux_1, 1, 0xA960, pkg);
+		printf("Saving head.bin...\n");
+
+		aux_2 = fopen("head.bin", "wb");
+		fwrite(aux_1, sizeof(unsigned char), 0xA960, aux_2);
+
+		free(aux_1);
+		fclose(aux_2);
+
+
+		// <-- we will generate a fake RIF file (work.bin)
+		// structure:  
+		// version: 00 01
+		// version flag : 00 01
+		// license type: 00 01
+		// license flags: 00 02
+		// psn account id (not used): EF CD AB 89 67 45 23 01
+		// Content ID : Extracted from .PKG file
+		// RIF Key (offset 0x50), it's left empty to be filled later
+
+		aux_1 = (unsigned char*) malloc(sizeof(unsigned char) * 512);
+
+		memset(aux_1, 0, 512);
+
+		// <-- version and version flag
+		*(unsigned int*)(aux_1) = 0x01000100;
+		// <-- license type and flags
+		*(unsigned int*)(aux_1+4) = 0x02000100;
+		// <-- psn account id (not used probably)
+		*(unsigned int*)(aux_1+8) = 0x89ABCDEF;
+		// <-- high 4 bytes
+		*(unsigned int*)(aux_1+0xC) = 0x01234567;
+		// <-- Content ID 
+		fseek(pkg, 0x30, SEEK_SET);
+		fread(aux_1+0x10, 1, 0x30, pkg);
+
+		// <-- save the work.bin
+		printf("Saving work.bin...\n");
+		aux_2 = fopen("work.bin", "wb");
+		fwrite(aux_1, sizeof(unsigned char), 512, aux_2);
+		free(aux_1);
+		fclose(aux_2);
+
 
 		/** get pkg key type */
 		unsigned int keyType = 0;
