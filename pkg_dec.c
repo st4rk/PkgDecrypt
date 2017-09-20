@@ -290,17 +290,30 @@ int main(int argc, char **argv) {
 					printf("fileName: %s\n", dirName);
 					temp = fopen(dirName, "wb");
 					
-					data = (unsigned char*) malloc (sizeof(unsigned char) * __builtin_bswap64(fileEntry[i].data_size));
-					
-					/** read file data */
-					fseek(content, __builtin_bswap64(fileEntry[i].data_offset), SEEK_SET);
-					fread(data, sizeof(unsigned char), __builtin_bswap64(fileEntry[i].data_size), content);
+					/** Read data in 64kb chunks */
+					data = (unsigned char*)malloc(sizeof(unsigned char) * 0x10000);
+					if (data) {
+						/** seek to the file data start */
+						fseek(content, __builtin_bswap64(fileEntry[i].data_offset), SEEK_SET);
+						uint64_t left = __builtin_bswap64(fileEntry[i].data_size);
+						while (left > 0) {
+							/** read file data */
+							int read = fread(data, sizeof(unsigned char), min(left, 0x10000), content);
 
-					/** write file data */
-					fwrite(data, sizeof(unsigned char), __builtin_bswap64(fileEntry[i].data_size), temp);
+							/** write file data */
+							int written = 0;
+							while (written < read)
+								written += fwrite(data + written, sizeof(unsigned char), read - written, temp);
+
+							left -= read;
+						}
+
+						free(data);
+					} else {
+						printf("Failed to allocate output buffer for file unpacking.");
+					}
 
 					fclose(temp);
-					free(data);
 				}
 				break;
 
