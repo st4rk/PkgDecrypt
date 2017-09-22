@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <openssl/aes.h>
+#include "aes/aes.h"
 
 const unsigned char pkg_key_psp[] = {
 	0x07, 0xF2, 0xC6, 0x82, 0x90, 0xB5, 0x0D, 0x2C, 0x33, 0x81, 0x8D, 0x70, 0x9B, 0x60, 0xE6, 0x2B
@@ -32,7 +32,6 @@ const unsigned char pkg_vita_4[] = {
 typedef struct ctr {
 	unsigned char iv[AES_BLOCK_SIZE];
 	unsigned char counter[AES_BLOCK_SIZE];
-	unsigned int num;
 } ctr;
 
 
@@ -46,6 +45,9 @@ typedef struct PKG_FILE_HEADER {
 	unsigned int padding;
 } PKG_FILE_HEADER;
 
+int min(int a, int b){
+	return a < b ? a : b;
+}
 
 int main(int argc, char **argv) {
 	FILE *pkg = NULL;
@@ -165,8 +167,6 @@ int main(int argc, char **argv) {
 		printf("Offset: 0x%lX\n", dataOffset);
 		printf("Size: 0x%lX\n", dataSize);
 
-		AES_KEY key;
-
 		FILE *content = fopen("out.bin", "wb+");
 
 		/**
@@ -177,18 +177,15 @@ int main(int argc, char **argv) {
 
 		switch (keyType) {
 			case 2:
-				AES_set_encrypt_key(pkg_vita_2, 128, &key);
-				AES_ecb_encrypt(pkg_key, ctr_key, &key, AES_ENCRYPT);
+				AES_ECB_encrypt(pkg_key, pkg_vita_2, ctr_key, AES_BLOCK_SIZE);
 			break;
 
 			case 3:
-				AES_set_encrypt_key(pkg_vita_3, 128, &key);
-				AES_ecb_encrypt(pkg_key, ctr_key, &key, AES_ENCRYPT);
+				AES_ECB_encrypt(pkg_key, pkg_vita_3, ctr_key, AES_BLOCK_SIZE);
 			break;
 
 			case 4:
-				AES_set_encrypt_key(pkg_vita_4, 128, &key);
-				AES_ecb_encrypt(pkg_key, ctr_key, &key, AES_ENCRYPT);
+				AES_ECB_encrypt(pkg_key, pkg_vita_4, ctr_key, AES_BLOCK_SIZE);
 			break;
 		}
 
@@ -204,18 +201,17 @@ int main(int argc, char **argv) {
 		memcpy(d_ctr.iv, pkg_key, AES_BLOCK_SIZE);
 		memset(d_ctr.counter, 0, AES_BLOCK_SIZE);
 
-		d_ctr.num = 0;
-
 		/**
 		 * AES CTR Decrypt, using the old key as IV
 		 */
-		AES_set_encrypt_key(keyType != 1 ? ctr_key : pkg_key_psp, 128, &key);
+		
+		AES_set_key(keyType != 1 ? ctr_key : pkg_key_psp);
 
 		printf("Decrypting...");
 		fseek(pkg, dataOffset, SEEK_SET);
 
 		while (fread(buffer, 1, AES_BLOCK_SIZE, pkg) == AES_BLOCK_SIZE) {
-			AES_ctr128_encrypt(buffer, out, AES_BLOCK_SIZE, &key, d_ctr.iv, d_ctr.counter, &d_ctr.num);
+			AES_CTR_encrypt(buffer, NULL, out, AES_BLOCK_SIZE, d_ctr.iv, d_ctr.counter);
 			fwrite(out, 1, AES_BLOCK_SIZE, content);
 		}
 
