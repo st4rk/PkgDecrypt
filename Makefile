@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-Ilibb64/ -Wall -std=c99
 LDFLAGS=-L./aes -L./libb64 -laes -lb64 -lz
-SOURCES=pkg_dec.c
+SOURCES=pkg_dec.c keyflate.c
 EXECUTABLE=pkg_dec
-SOURCES_MKKEY=make_key.c
+SOURCES_MKKEY=make_key.c keyflate.c
 EXECUTABLE_MKKEY=make_key
 
 all: deps pkg_dec make_key
