@@ -18,9 +18,10 @@ extern "C" {
 #define __builtin_bswap16 _byteswap_ushort
 #define __builtin_bswap32 _byteswap_ulong
 #define __builtin_bswap64 _byteswap_uint64
+#define fseek _fseeki64
 
 #define _CRT_SECURE_NO_WARNINGS 1
-#define PACKED pack( push, 1 )
+#define PACKED 
 
 /* Assume that win32 platform runs on intel or little endian ARM */
 #define __ORDER_LITTLE_ENDIAN__ 1

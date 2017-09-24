@@ -699,8 +699,10 @@ int main( int argc, char **argv ) {
             case 16:
             case 17:
             case 19:
+			case 20:
             case 21:
-            case 22: {
+            case 22:
+			case 24: {
                 //Construct output path
                 strncpy( tpath, output_dir, 1024 );
                 strncat( tpath, PATH_SEPARATOR_STR, 1024 );
@@ -710,7 +712,7 @@ int main( int argc, char **argv ) {
 
                 //Unpack output file
                 pkg_seek( pkg, filerec->data_offset + pkg->header.data_offset );
-                printf( "File %s, size %lu\n", tpath, filerec->data_size );
+                printf( "File %s, size %llu\n", tpath, filerec->data_size );
                 FILE *temp = fopen( tpath, "wb" );
 
                 /** Read data in 64kb chunks */
@@ -774,7 +776,7 @@ int main( int argc, char **argv ) {
                 if ( headbin ) {
                     fwrite( data, 1, length, headbin );
                     fclose( headbin );
-                    printf( "File %s, size %d\n", tpath, length );
+                    printf( "File %s, size %zu\n", tpath, length );
                 } else {
                     fprintf( stderr, "Can't write head.bin.\n" );
                 }
@@ -806,7 +808,7 @@ int main( int argc, char **argv ) {
                 if ( headbin ) {
                     fwrite( data, 1, length, headbin );
                     fclose( headbin );
-                    printf( "File %s, size %d\n", tpath, length );
+                    printf( "File %s, size %zu\n", tpath, length );
                 } else {
                     fprintf( stderr, "Can't write tail.bin.\n" );
                 }
@@ -858,7 +860,7 @@ int main( int argc, char **argv ) {
                 if ( workbin ) {
                     fwrite( encoded_license, 1, length, workbin );
                     fclose( workbin );
-                    printf( "File %s, size %d\n", tpath, length );
+                    printf( "File %s, size %zu\n", tpath, length );
                 } else {
                     fprintf( stderr, "Can't write work.bin.\n" );
                 }
