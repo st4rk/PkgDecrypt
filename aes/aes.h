@@ -46,6 +46,7 @@ void AES_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, co
 
 void AES_set_key(const uint8_t *key);
 void AES_CTR_encrypt(const uint8_t *input, const uint8_t *key, uint8_t *output, const uint32_t length, uint8_t *ivec, uint8_t *ecount_buf);
+void ctr128_add( unsigned char *counter, unsigned long long int value );
 
 #endif // #if defined(CTR) && (CTR == 1)
 

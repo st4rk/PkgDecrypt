@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Ilibb64/ -Wall -std=c99
+CFLAGS=-Ilibb64/ -Wall -std=c99 -O2
 LDFLAGS=-L./aes -L./libb64 -laes -lb64 -lz
 SOURCES=pkg_dec.c keyflate.c
 EXECUTABLE=pkg_dec
