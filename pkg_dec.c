@@ -102,7 +102,7 @@ typedef struct PKG_FILE_STREAM {
     uint64_t ctr_zero_offset;
     uint8_t ctr_next_iv[0x10];
     uint8_t ctr_enc_ctr[0x10];
-    off_t file_pos;
+    off64_t file_pos;
 } PKG_FILE_STREAM;
 
 PKG_FILE_STREAM *pkg_open( const char *path ) {
@@ -201,7 +201,7 @@ PKG_FILE_STREAM *pkg_open( const char *path ) {
         memcpy( stream->ctr_next_iv, stream->header.pkg_data_iv, AES_BLOCK_SIZE );
 
         //Prepare to read first block of encrypted data
-        stream->file_pos = (off_t) stream->header.data_offset;
+        stream->file_pos = (off64_t) stream->header.data_offset;
         fseek( stream->stream, stream->file_pos, SEEK_SET );
 
         //Set AES key
@@ -242,26 +242,26 @@ size_t pkg_read( PKG_FILE_STREAM *stream, uint8_t *buf, size_t length ) {
     }
 
     size_t total_length = length;
-    length = ulmin( stream->header.data_size - ( stream->file_pos - stream->header.data_offset ), length );
+    length = ulmin( stream->header.data_size + stream->header.data_offset - stream->file_pos, length );
     if ( length > 0 ) {
         /*
 			Reading encrypted part requires read to be aligned on AES block size, which is 128 bits
 		*/
-        off_t reldata = stream->file_pos - stream->header.data_offset;
+        off64_t reldata = stream->file_pos - stream->header.data_offset;
         if ( ( reldata & 0xF ) != 0 ) {
             //Unaligned access
             DBG( "Unaligned access!" );
-            off_t reldata_aligned = reldata & 0xFFFFFFFFFFFFFFF0ull;
+            off64_t reldata_aligned = reldata & 0xFFFFFFFFFFFFFFF0ull;
             uint8_t enc[AES_BLOCK_SIZE];
             fseek( stream->stream, stream->header.data_offset + reldata_aligned, SEEK_SET );
             fread( enc, 1, AES_BLOCK_SIZE, stream->stream );
             stream->file_pos = stream->header.data_offset + reldata_aligned + 0x10;
 
-            uint32_t requested = imin( reldata_aligned - reldata, length );
+            uint32_t requested = imin( AES_BLOCK_SIZE - ( reldata_aligned - reldata ), length );
 
             //Decrypt block, copy to output
             AES_CTR_encrypt( enc, NULL, enc, AES_BLOCK_SIZE, stream->ctr_next_iv, stream->ctr_enc_ctr );
-            memcpy( buf, enc, requested );
+            memcpy( buf, enc + reldata - reldata_aligned, requested );
 
             buf += requested;
             read += requested;
@@ -272,13 +272,13 @@ size_t pkg_read( PKG_FILE_STREAM *stream, uint8_t *buf, size_t length ) {
         //Now buffer is property aligned
         size_t aligned_read = fread( buf, 1, length, stream->stream );
         read += aligned_read;
+        stream->file_pos += aligned_read;
         while ( aligned_read > 0 ) {
             uint32_t len = imin( AES_BLOCK_SIZE, aligned_read );
             AES_CTR_encrypt( buf, NULL, buf, len, stream->ctr_next_iv, stream->ctr_enc_ctr );
             buf += len;
             aligned_read -= len;
         }
-        stream->file_pos += read;
 
         if ( ( length & 0xF ) != 0 ) {
             //Reset counter of current block if read was partial
@@ -297,13 +297,14 @@ size_t pkg_read( PKG_FILE_STREAM *stream, uint8_t *buf, size_t length ) {
         stream->file_pos += req;
 
         read += req;
+        stream->file_pos += req;
     }
     return read;
 }
 
 void pkg_fill_metadata( PKG_FILE_STREAM *stream, PKG_METADATA *metadata ) {
     size_t length = stream->header.data_offset - stream->header.info_offset;
-    off_t offset = stream->header.info_offset;
+    off64_t offset = stream->header.info_offset;
 
     uint8_t *buf = malloc( length );
     uint8_t *block = buf;
@@ -699,10 +700,10 @@ int main( int argc, char **argv ) {
             case 16:
             case 17:
             case 19:
-			case 20:
+            case 20:
             case 21:
             case 22:
-			case 24: {
+            case 24: {
                 //Construct output path
                 strncpy( tpath, output_dir, 1024 );
                 strncat( tpath, PATH_SEPARATOR_STR, 1024 );
@@ -724,12 +725,17 @@ int main( int argc, char **argv ) {
                         size_t required = ulmin( left, 0x10000 );
                         int read = pkg_read( pkg, data, required );
 
-                        /** write file data */
-                        int written = 0;
-                        while ( written < read )
-                            written += fwrite( data + written, sizeof( unsigned char ), read - written, temp );
+                        if ( read > 0 ) {
+                            /** write file data */
+                            int written = 0;
+                            while ( written < read )
+                                written += fwrite( data + written, sizeof( unsigned char ), read - written, temp );
 
-                        left -= read;
+                            left -= read;
+                        } else {
+                            fprintf( stderr, "Out of info to read!! Left %d\n", left );
+                            break;
+                        }
                     }
 
                     free( data );
@@ -788,7 +794,7 @@ int main( int argc, char **argv ) {
             }
 
             //tail.bin
-            off_t offset = pkg->header.data_offset + pkg->header.data_size;
+            off64_t offset = pkg->header.data_offset + pkg->header.data_size;
             length = pkg->header.total_size - offset;
             data = malloc( length );
             if ( data ) {

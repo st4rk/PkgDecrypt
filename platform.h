@@ -44,11 +44,15 @@ extern "C" {
 
 #define _FILE_OFFSET_BITS 64
 
+typedef off_t off64_t;
+
 #elif _WIN32
 // windows code goes here
 #include <direct.h>
 #define PATH_SEPARATOR '\\'
 #define PATH_SEPARATOR_STR "\\"
+
+typedef long long int off64_t;
 
 #endif
 
