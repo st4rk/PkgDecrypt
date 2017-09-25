@@ -39,6 +39,8 @@ extern "C" {
 
 #ifdef __linux__
 //linux code goes here
+#include <sys/types.h>
+
 #define PATH_SEPARATOR '/'
 #define PATH_SEPARATOR_STR "/"
 
