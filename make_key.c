@@ -36,6 +36,7 @@ int main( int argc, char **argv ) {
                     memcpy( content_id, license->content_id, 0x30 );
 
                     unsigned char out[512];
+                    memset( out, 0, 512 );
                     if ((len = deflateKey( (unsigned char *) key, out, 512 )) < 0){
                         printf( "Error: %s failed to compress.\n", argv[i] );
                     } else {
