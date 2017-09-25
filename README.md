@@ -31,7 +31,7 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 * b)PKG file for extraction purposes only.
 
 # Changelog:
-### 1.0.4
+### 1.1.0.0
 New features:
 - Support of generating fake RIFs from hex-encoded klicensee and zRIFs
 - Unpacking files using ux0 hierarchy emulation
@@ -47,15 +47,15 @@ Bugfixes:
 - Generated head.bin now have proper file size,
 - Attempted to fix sku_flag value using drm_type of package (different solution from temp.bin),
 - Other bugfixes.
-### 1.0.3
+### 1.0.0.3
 * Added full support for license keys, now if you use license key it will generate fully working work.bin file,
 * Added check for license, if license is not used, file work.bin will not be generated at all,
 * All *.bin files are now generated in proper location `output_folder/sce_sys/packages/*.bin`
-### 1.0.2
+### 1.0.0.2
 * Fixed Windows extraction, now it extract 1:1 files.
-### 1.0.1
+### 1.0.0.1
 * St4rk's support for *.bin files
-### 1.0.0
+### 1.0.0.0
 * St4rk Initial code
 
 # ToDo list:
