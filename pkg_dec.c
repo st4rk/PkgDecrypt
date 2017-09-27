@@ -18,7 +18,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define DBG printf
+#define VERSION_MAJOR 1
+#define VERSION_MINOR 1
+#define VERSION_PATCH 1
+
 const unsigned char pkg_key_psp[] = {
     0x07, 0xF2, 0xC6, 0x82, 0x90, 0xB5, 0x0D, 0x2C, 0x33, 0x81, 0x8D, 0x70, 0x9B, 0x60, 0xE6, 0x2B};
 
@@ -250,7 +253,7 @@ size_t pkg_read( PKG_FILE_STREAM *stream, uint8_t *buf, size_t length ) {
         off64_t reldata = stream->file_pos - stream->header.data_offset;
         if ( ( reldata & 0xF ) != 0 ) {
             //Unaligned access
-            DBG( "Unaligned access!" );
+            printf( "Unaligned access!" );
             off64_t reldata_aligned = reldata & 0xFFFFFFFFFFFFFFF0ull;
             uint8_t enc[AES_BLOCK_SIZE];
             fseek( stream->stream, stream->header.data_offset + reldata_aligned, SEEK_SET );
@@ -447,6 +450,8 @@ int mkdirs( char *path ) {
 */
 int main( int argc, char **argv ) {
 
+    fprintf( "pkg_dec - PS Vita PKG decryptor/unpacker, version %d.%d.%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
+
     //Parse arguments
     char *input_file = NULL;
     char *output_dir = NULL;
@@ -497,6 +502,7 @@ int main( int argc, char **argv ) {
         if ( pkg == NULL ) {
             if ( errno != 0 ) {
                 printf( "PKG %s is not a valid Vita PKG file!\n", input_file );
+                return -1;
             } else {
                 char error[1024];
                 memset( error, 0, 1024 );
@@ -506,7 +512,7 @@ int main( int argc, char **argv ) {
             }
         }
 
-        if ( output_dir == NULL ) {
+        if ( output_dir == NULL || strlen( output_dir ) == 0 ) {
             output_dir = ".";
         }
 

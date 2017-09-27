@@ -3,16 +3,21 @@
  * Encodes NoNpDRM fake license into compact base64 encoded key, sutiable for sharing.
  */
 
+#include "b64/cencode.h"
+#include "keyflate.h"
+#include "rif.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "keyflate.h"
-#include "b64/cencode.h"
-#include "rif.h"
+
+#define VERSION_MAJOR 1
+#define VERSION_MINOR 0
+#define VERSION_PATCH 2
 
 char errmsg[1024] = "";
 
 int main( int argc, char **argv ) {
+    fprintf( stderr, "make_key - zRIF generator, version %d.%d>%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
     errmsg[1023] = 0;
     if ( argc > 1 ) {
         for ( int i = 1; i < argc; i++ ) {
@@ -24,9 +29,9 @@ int main( int argc, char **argv ) {
                     printf( "Error: %s is not a valid (or supported) license key (size mismatch).\n", argv[i] );
                 } else {
                     SceNpDrmLicense *license = (SceNpDrmLicense *) key;
-                    
+
                     //Check if it is a NoNpDRM license
-                    if (license->aid != FAKE_AID){
+                    if ( license->aid != FAKE_AID ) {
                         printf( "Warning: %s may be not a valid NoNpDRM fake license.\n", argv[i] );
                         license->aid = FAKE_AID;
                     }
@@ -37,7 +42,7 @@ int main( int argc, char **argv ) {
 
                     unsigned char out[512];
                     memset( out, 0, 512 );
-                    if ((len = deflateKey( (unsigned char *) key, out, 512 )) < 0){
+                    if ( ( len = deflateKey( (unsigned char *) key, out, 512 ) ) < 0 ) {
                         printf( "Error: %s failed to compress.\n", argv[i] );
                     } else {
                         printf( "Compressed key to %lu bytes.\n", len );
