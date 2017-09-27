@@ -20,7 +20,7 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 1
-#define VERSION_PATCH 1
+#define VERSION_PATCH 2
 
 const unsigned char pkg_key_psp[] = {
     0x07, 0xF2, 0xC6, 0x82, 0x90, 0xB5, 0x0D, 0x2C, 0x33, 0x81, 0x8D, 0x70, 0x9B, 0x60, 0xE6, 0x2B};
@@ -189,10 +189,10 @@ PKG_FILE_STREAM *pkg_open( const char *path ) {
             AES_ECB_encrypt( stream->header.pkg_data_iv, pkg_vita_2, stream->ctr_key, AES_BLOCK_SIZE );
             break;
         case 3:
-            AES_ECB_encrypt( stream->header.pkg_data_iv, pkg_vita_2, stream->ctr_key, AES_BLOCK_SIZE );
+            AES_ECB_encrypt( stream->header.pkg_data_iv, pkg_vita_3, stream->ctr_key, AES_BLOCK_SIZE );
             break;
         case 4:
-            AES_ECB_encrypt( stream->header.pkg_data_iv, pkg_vita_2, stream->ctr_key, AES_BLOCK_SIZE );
+            AES_ECB_encrypt( stream->header.pkg_data_iv, pkg_vita_4, stream->ctr_key, AES_BLOCK_SIZE );
             break;
         default:
             //Unsupported PKG type, encrypted with unknown key
@@ -620,9 +620,7 @@ int main( int argc, char **argv ) {
             break;
         case 1:
             //Output to the "AAAA00000_00-CONTENTID"
-            strncpy( temp, output_dir, 1024 );
-            strncat( temp, PATH_SEPARATOR_STR, 1024 );
-            strncat( temp, pkg->header.content_id + 7, 1024 );
+            snprintf( temp, 1024, "%s%s%s", output_dir, PATH_SEPARATOR_STR, pkg->header.content_id + 7 );
             output_dir = temp;
             break;
         case 2:
@@ -630,18 +628,12 @@ int main( int argc, char **argv ) {
             strncpy( temp, output_dir, 1024 );
             strncat( temp, PATH_SEPARATOR_STR, 1024 );
             if ( is_dlc ) {
-                strncat( temp, "addcont", 1024 );
-                strncat( temp, PATH_SEPARATOR_STR, 1024 );
                 pkg->header.content_id[16] = '\0';
-                strncat( temp, pkg->header.content_id + 7, 1024 );
+                snprintf( temp, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "addcont", PATH_SEPARATOR_STR, pkg->header.content_id + 7, PATH_SEPARATOR_STR, pkg->header.content_id + 20 );
                 pkg->header.content_id[16] = '_';
-                strncat( temp, PATH_SEPARATOR_STR, 1024 );
-                strncat( temp, pkg->header.content_id + 20, 1024 );
             } else {
-                strncat( temp, "app", 1024 );
-                strncat( temp, PATH_SEPARATOR_STR, 1024 );
                 pkg->header.content_id[16] = '\0';
-                strncat( temp, pkg->header.content_id + 7, 1024 );
+                snprintf( temp, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "app", PATH_SEPARATOR_STR, pkg->header.content_id + 7 );
                 pkg->header.content_id[16] = '_';
             }
             output_dir = temp;
@@ -682,8 +674,7 @@ int main( int argc, char **argv ) {
             case 4:
             case 18: {
                 //Construct output path
-                strncpy( tpath, output_dir, 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
+                snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
                 size_t idx = strlen( tpath );
                 memcpy( tpath + idx, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
                 tpath[idx + filerec->filename_size] = '\0';
@@ -711,8 +702,7 @@ int main( int argc, char **argv ) {
             case 22:
             case 24: {
                 //Construct output path
-                strncpy( tpath, output_dir, 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
+                snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
                 size_t idx = strlen( tpath );
                 memcpy( tpath + idx, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
                 tpath[idx + filerec->filename_size] = '\0';
@@ -768,6 +758,16 @@ int main( int argc, char **argv ) {
         //  work.bin (reconstruction from key or or decompressed zRIF)
         //  temp.bin (unpacked in the course of package unpacking)
         {
+
+            //First create sce_sys/package directory in the output, so our spoils is not lost in space-time
+            snprintf( tpath, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package" );
+            if ( mkdirs( tpath ) < 0 ) {
+                fprintf( stderr, "Can't create directory %s.\n", tpath );
+                if ( errno != 0 )
+                    perror( "Error" );
+                exit( 1 );
+            }
+
             //head.bin
             size_t length = pkg->header.data_offset + metadata.index_table_size;
             uint8_t *data = malloc( length );
@@ -776,13 +776,7 @@ int main( int argc, char **argv ) {
                 //Read pkg bypassing automatic decryption
                 fread( data, 1, length, pkg->stream );
 
-                strncpy( tpath, output_dir, 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "sce_sys", 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "package", 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "head.bin", 1024 );
+                snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package", PATH_SEPARATOR_STR, "head.bin" );
 
                 FILE *headbin = fopen( tpath, "wb" );
                 if ( headbin ) {
@@ -808,13 +802,7 @@ int main( int argc, char **argv ) {
                 //Read pkg bypassing automatic decryption
                 fread( data, 1, length, pkg->stream );
 
-                strncpy( tpath, output_dir, 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "sce_sys", 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "package", 1024 );
-                strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                strncat( tpath, "tail.bin", 1024 );
+                snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package", PATH_SEPARATOR_STR, "tail.bin" );
 
                 FILE *headbin = fopen( tpath, "wb" );
                 if ( headbin ) {
@@ -837,24 +825,14 @@ int main( int argc, char **argv ) {
                     //Compose ux0:license/addcont/ style path
                     char t[128];
                     memset( t, 0, 128 );
-                    strncpy( t, output_dir + output_dir_root, 128 );
+
                     output_dir[output_dir_root] = '\0';
-                    strncpy( tpath, output_dir, 1024 );
+                    strncpy( t, output_dir + output_dir_root, 128 );
                     output_dir[output_dir_root] = PATH_SEPARATOR;
-                    strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                    strncat( tpath, "license", 1024 );
-                    strncat( tpath, t, 1024 );
-                    strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                    strncat( tpath, "6488b73b912a753a492e2714e9b38bc7.rif", 1024 );
+                    snprintf( tpath, 1024, "%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "license", t, PATH_SEPARATOR_STR, "6488b73b912a753a492e2714e9b38bc7.rif" );
                 } else {
                     //Use standard location in the package folder
-                    strncpy( tpath, output_dir, 1024 );
-                    strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                    strncat( tpath, "sce_sys", 1024 );
-                    strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                    strncat( tpath, "package", 1024 );
-                    strncat( tpath, PATH_SEPARATOR_STR, 1024 );
-                    strncat( tpath, "work.bin", 1024 );
+                    snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package", PATH_SEPARATOR_STR, "work.bin" );
                 }
 
                 char *last = strrchr( tpath, PATH_SEPARATOR );
