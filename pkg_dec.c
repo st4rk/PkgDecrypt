@@ -450,7 +450,7 @@ int mkdirs( char *path ) {
 */
 int main( int argc, char **argv ) {
 
-    fprintf( "pkg_dec - PS Vita PKG decryptor/unpacker, version %d.%d.%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
+    fprintf( stderr, "pkg_dec - PS Vita PKG decryptor/unpacker, version %d.%d.%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
 
     //Parse arguments
     char *input_file = NULL;
