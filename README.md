@@ -36,6 +36,8 @@ To create new, zRIF license, use the make_key.
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.2.0.0
+* Added generation of `PDB` files for DLC package installation.
 ### 1.1.3.0
 * Fixed bug which prevented creation of `sce_sys/package` directory contents for some PKGs.
 * Changed directory layout of `ux` mode for DLC packages.

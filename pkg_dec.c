@@ -9,6 +9,7 @@
 #include "keyflate.h"
 #include "libb64/b64/cdecode.h"
 #include "pkg.h"
+#include "pkgdb.h"
 #include "platform.h"
 #include "rif.h"
 #include <errno.h>
@@ -18,8 +19,8 @@
 #include <string.h>
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 1
-#define VERSION_PATCH 3
+#define VERSION_MINOR 2
+#define VERSION_PATCH 0
 
 int decode_license( char *encoded, uint8_t *target ) {
     //First check encoded buffer
@@ -86,6 +87,21 @@ int mkdirs( char *path ) {
             default:
                 return -1;
             }
+        }
+    }
+    return 0;
+}
+
+size_t writeFile( const char *path, const uint8_t *buf, const uint32_t length ) {
+    FILE *out = fopen( path, "wb" );
+    if ( out ) {
+        if ( length > 0 ) {
+            size_t written = fwrite( buf, sizeof( uint8_t ), length, out );
+            fclose( out );
+            return written;
+        } else {
+            fclose( out );
+            return 1;
         }
     }
     return 0;
@@ -294,13 +310,10 @@ int main( int argc, char **argv ) {
 
                 //Check first usable folder in sequence 00000000->99999999
                 struct stat st = {0};
-                int id = 1;
+                is_dlc = 1;
                 do {
-                    snprintf( sub, 600, "%08d", id++ );
+                    snprintf( sub, 600, "%08d", is_dlc++ );
                 } while ( stat( temp, &st ) != -1 );
-
-                //Create *.pdb files
-                //TODO Missing this feature atm
 
                 //Put DLC data in the game id folder
                 sub = strlen( temp ) + temp;
@@ -343,7 +356,7 @@ int main( int argc, char **argv ) {
         //Decrypt and unpack all the files
         PKG_ITEM_RECORD *filerec = (PKG_ITEM_RECORD *) index_table;
         uint32_t record_count = pkg->header.item_count;
-        printf( "Extracting %u record to %s...\n", record_count, output_dir );
+        printf( "Extracting %u records to %s...\n", record_count, output_dir );
         while ( record_count > 0 ) {
 
 #if ( __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ )
@@ -580,6 +593,45 @@ int main( int argc, char **argv ) {
                 }
 
                 free( encoded_license );
+            }
+
+            //PDB files for dlcs
+            if ( is_dlc ) {
+                uint8_t *pkgdb = malloc( 0x2000 );
+                uint32_t dblen = pkgdbGenerate( pkgdb, 0x2000,
+                                                psfGetString( pkg->sfo_file, "TITLE" ),
+                                                psfGetString( pkg->sfo_file, "TITLE_ID" ),
+                                                /* TODO basename of pkg */ NULL,
+                                                /* TODO pkg url from args */ NULL,
+                                                pkg->header.total_size,
+                                                is_dlc - 1 );
+
+                char *sub;
+                strcpy( temp, output_dir );
+
+                if ( md_mode == 2 )
+                    sub = strrchr( temp, PATH_SEPARATOR );
+                else
+                    sub = temp + strlen( temp );
+
+                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d0.pdb" );
+                if ( !writeFile( temp, pkgdb, dblen ) ) {
+                    fprintf( stderr, "Can't write out %s!\n", temp );
+                } else
+                    printf( "File %s\n", temp );
+
+                pkgdb[0x20] = 0;
+                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d1.pdb" );
+                if ( !writeFile( temp, pkgdb, dblen ) ) {
+                    fprintf( stderr, "Can't write out %s!\n", temp );
+                } else
+                    printf( "File %s\n", temp );
+
+                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "f0.pdb" );
+                if ( !writeFile( temp, NULL, 0 ) ) {
+                    fprintf( stderr, "Can't write out %s!\n", temp );
+                } else
+                    printf( "File %s\n", temp );
             }
         }
 

@@ -45,6 +45,9 @@
     <ClCompile Include="..\platform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\pkgdb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\platform.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\sfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pkgdb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

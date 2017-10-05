@@ -17,7 +17,7 @@
 char errmsg[1024] = "";
 
 int main( int argc, char **argv ) {
-    fprintf( stderr, "make_key - zRIF generator, version %d.%d>%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
+    fprintf( stderr, "make_key - zRIF generator, version %d.%d.%d.\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH );
     errmsg[1023] = 0;
     if ( argc > 1 ) {
         for ( int i = 1; i < argc; i++ ) {
