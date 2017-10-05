@@ -110,7 +110,7 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -139,6 +139,7 @@
     </Link>
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level1</WarningLevel>
     </ClCompile>
     <PostBuildEvent>
       <Command>upx -9 $(TargetDir)$(TargetFileName)</Command>
@@ -152,15 +153,20 @@
     <ClCompile Include="..\keyflate.c" />
     <ClCompile Include="..\libb64\cdecode.c" />
     <ClCompile Include="..\libb64\cencode.c" />
+    <ClCompile Include="..\pkg.c" />
     <ClCompile Include="..\pkg_dec.c" />
+    <ClCompile Include="..\platform.c" />
+    <ClCompile Include="..\sfo.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\aes\aes.h" />
     <ClInclude Include="..\keyflate.h" />
     <ClInclude Include="..\libb64\b64\cdecode.h" />
     <ClInclude Include="..\libb64\b64\cencode.h" />
+    <ClInclude Include="..\pkg.h" />
     <ClInclude Include="..\platform.h" />
     <ClInclude Include="..\rif.h" />
+    <ClInclude Include="..\sfo.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>

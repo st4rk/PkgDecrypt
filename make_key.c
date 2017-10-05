@@ -45,7 +45,7 @@ int main( int argc, char **argv ) {
                     if ( ( len = deflateKey( (unsigned char *) key, out, 512 ) ) < 0 ) {
                         printf( "Error: %s failed to compress.\n", argv[i] );
                     } else {
-                        printf( "Compressed key to %lu bytes.\n", len );
+                        printf( "Compressed key to %llu bytes.\n", len );
 
                         //Align len to 3 byte block to avoid padding by base64
                         if ( ( len % 3 ) > 0 ) len += 3 - ( len % 3 );

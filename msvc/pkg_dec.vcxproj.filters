@@ -36,6 +36,15 @@
     <ClCompile Include="..\libb64\cencode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\pkg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sfo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\platform.h">
@@ -57,6 +66,12 @@
       <Filter>Header Files\aes</Filter>
     </ClInclude>
     <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pkg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
