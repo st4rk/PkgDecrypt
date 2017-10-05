@@ -22,6 +22,12 @@
 #define VERSION_MINOR 1
 #define VERSION_PATCH 2
 
+#if defined( WIN32 ) || defined( WIN64 )
+    // Copied from linux libc sys/stat.h:
+    #define S_ISREG( m ) ( ( (m) &S_IFMT ) == S_IFREG )
+    #define S_ISDIR( m ) ( ( (m) &S_IFMT ) == S_IFDIR )
+#endif
+
 const unsigned char pkg_key_psp[] = {
     0x07, 0xF2, 0xC6, 0x82, 0x90, 0xB5, 0x0D, 0x2C, 0x33, 0x81, 0x8D, 0x70, 0x9B, 0x60, 0xE6, 0x2B};
 
@@ -529,11 +535,11 @@ int main( int argc, char **argv ) {
 
             //First check if output points to an existing directory, use path literally as file output if it could be used this way
             struct stat st = {0};
-            if (stat(outfile, &st) == 0 && S_ISDIR(st.st_mode)){
+            if ( stat( outfile, &st ) == 0 && S_ISDIR( st.st_mode ) ) {
                 strncat( outfile, PATH_SEPARATOR_STR, 1024 );
                 strncat( outfile, "plaintext.pkg", 1024 );
             }
-            
+
             pkg_seek( pkg, 0 );
 
             FILE *out = fopen( outfile, "wb" );
@@ -695,6 +701,7 @@ int main( int argc, char **argv ) {
                 memcpy( tpath + idx, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
                 tpath[idx + filerec->filename_size] = '\0';
 
+                convertPath( tpath );
                 if ( mkdirs( tpath ) < 0 ) {
                     fprintf( stderr, "Can't create directory %s.\n", tpath );
                     if ( errno != 0 )
@@ -723,12 +730,13 @@ int main( int argc, char **argv ) {
             case 21:
             // right.suprx have this type
             case 22: {
-                //Construct output path
+            //Construct output path
             normal_file_decrypt:
                 snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
                 size_t idx = strlen( tpath );
                 memcpy( tpath + idx, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
                 tpath[idx + filerec->filename_size] = '\0';
+                convertPath( tpath );
 
                 //Unpack output file
                 pkg_seek( pkg, filerec->data_offset + pkg->header.data_offset );
@@ -771,8 +779,9 @@ int main( int argc, char **argv ) {
                 //Construct output path
                 memset( tpath, 0, 1024 );
                 memcpy( tpath, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
-                if (strstr(tpath, "digs.bin")){
-                    snprintf( "%s%ssce_sys/package/body.bin", output_dir, PATH_SEPARATOR_STR );
+                if ( strstr( tpath, "digs.bin" ) ) {
+                    snprintf( tpath, 1024, "%s%ssce_sys/package/body.bin", output_dir, PATH_SEPARATOR_STR );
+                    convertPath( tpath );
 
                     pkg_seek( pkg, filerec->data_offset + pkg->header.data_offset );
                     printf( "File body.bin, size %llu\n", filerec->data_size );
@@ -808,7 +817,6 @@ int main( int argc, char **argv ) {
                     }
 
                     fclose( temp );
-
 
                 } else {
                     fprintf( stderr, "Filetype is 0x18, but file is not a digs.bin, decrypting in default mode." );

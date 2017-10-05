@@ -9,6 +9,8 @@
 #ifndef __PLATFORM_H__
 #define __PLATFORM_H__ 1
 
+#include <sys/stat.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,11 +75,13 @@ char* convertPath(char * string){
 #define PATH_SEPARATOR '\\'
 #define PATH_SEPARATOR_STR "\\"
 
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+
 typedef long long int off64_t;
 
 char* convertPath(char * string){
-    int p = 0;
-    while (string[p] != '\0')
+    int p = -1;
+    while (string[++p] != '\0')
         if (string[p] == '/')
             string[p] = '\\';
     return string;
