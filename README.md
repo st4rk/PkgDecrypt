@@ -23,6 +23,11 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 	<filename.pkg>		Input PKG file
 	<output_directory>	Directory where all files will be places. Current directory by default.
 ```
+To create new, zRIF license, use the make_key.
+
+```
+        make_key license_file
+```
 
 
 # Requirements
@@ -31,6 +36,10 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.1.2.0
+* Fixed bug with PSM PKG unpacking.
+### 1.1.1.0
+* Bug fixes.
 ### 1.1.0.0
 New features:
 - Support of generating fake RIFs from hex-encoded klicensee and zRIFs
@@ -68,6 +77,6 @@ TheRadziu for PR, team management and testing,
 
 Atrexia for supporting us with this idea, 
 
-FatalErrorX for providing me with all files necessary for debug and PoC testing,
+FatalErrorX for providing us with all files necessary for debug and PoC testing,
 
 Brandonheat8 for the icon.
