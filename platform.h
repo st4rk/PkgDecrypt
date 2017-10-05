@@ -48,6 +48,10 @@ extern "C" {
 
 typedef off_t off64_t;
 
+char* convertPath(char * string){
+    return string;
+}
+
 #elif _WIN32
 // windows code goes here
 #include <direct.h>
@@ -55,6 +59,14 @@ typedef off_t off64_t;
 #define PATH_SEPARATOR_STR "\\"
 
 typedef long long int off64_t;
+
+char* convertPath(char * string){
+    int p = 0;
+    while (string[p] != '\0')
+        if (string[p] == '/')
+            string[p] = '\\';
+    return string;
+}
 
 #endif
 

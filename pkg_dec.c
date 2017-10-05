@@ -526,9 +526,14 @@ int main( int argc, char **argv ) {
 
             char *outfile = malloc( 1024 );
             strncpy( outfile, output_dir, 1024 );
-            strncat( outfile, PATH_SEPARATOR_STR, 1024 );
-            strncat( outfile, "plaintext.pkg", 1024 );
 
+            //First check if output points to an existing directory, use path literally as file output if it could be used this way
+            struct stat st = {0};
+            if (stat(outfile, &st) == 0 && S_ISDIR(st.st_mode)){
+                strncat( outfile, PATH_SEPARATOR_STR, 1024 );
+                strncat( outfile, "plaintext.pkg", 1024 );
+            }
+            
             pkg_seek( pkg, 0 );
 
             FILE *out = fopen( outfile, "wb" );
@@ -557,6 +562,8 @@ int main( int argc, char **argv ) {
 
         PKG_METADATA metadata;
         pkg_fill_metadata( pkg, &metadata );
+
+        printf( "Package metatdata:\n\tDRM type: 0x%X\n\tContent type: 0x%X\n\tPackage flags: 0x%X\n", metadata.drm_type, metadata.content_type, metadata.package_flags );
 
         //Determine PKG content type
         int is_dlc = 0;
@@ -650,6 +657,16 @@ int main( int argc, char **argv ) {
             }
         }
 
+        //Create sce_sys/package directory in the output, so our spoils aren't lost in space-time
+        char *tpath = malloc( 1024 );
+        snprintf( tpath, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package" );
+        if ( mkdirs( tpath ) < 0 ) {
+            fprintf( stderr, "Can't create directory %s.\n", tpath );
+            if ( errno != 0 )
+                perror( "Error" );
+            exit( 1 );
+        }
+
         //Read index table
         uint8_t *index_table = malloc( metadata.index_table_size );
         pkg_seek( pkg, pkg->header.data_offset + metadata.index_table_offset );
@@ -659,7 +676,6 @@ int main( int argc, char **argv ) {
         PKG_ITEM_RECORD *filerec = (PKG_ITEM_RECORD *) index_table;
         uint32_t record_count = pkg->header.item_count;
         printf( "Extracting %u record to %s...\n", record_count, output_dir );
-        char *tpath = malloc( 1024 );
         while ( record_count > 0 ) {
 
 #if ( __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ )
@@ -685,23 +701,30 @@ int main( int argc, char **argv ) {
                         perror( "Error" );
                     exit( 1 );
                 } else {
-                    printf( "Directory %s\n", tpath );
+                    printf( "[%02X] Directory %s\n", filerec->flags & 0xff, tpath );
                 }
                 break;
             }
             case 0:
             case 1:
+            // all regular data files have this type
             case 3:
+            // user-mode executables have this type (eboot.bin, sce_modules contents)
             case 14:
             case 15:
+            // keystone have this type
             case 16:
+            // PFS files have this type (files.db, unicv.db, pflist)
             case 17:
+            // temp.bin have this type
             case 19:
             case 20:
+            // clearsign have this type
             case 21:
-            case 22:
-            case 24: {
+            // right.suprx have this type
+            case 22: {
                 //Construct output path
+            normal_file_decrypt:
                 snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
                 size_t idx = strlen( tpath );
                 memcpy( tpath + idx, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
@@ -709,7 +732,7 @@ int main( int argc, char **argv ) {
 
                 //Unpack output file
                 pkg_seek( pkg, filerec->data_offset + pkg->header.data_offset );
-                printf( "File %s, size %llu\n", tpath, filerec->data_size );
+                printf( "[%02X] File %s, size %llu\n", filerec->flags & 0xff, tpath, filerec->data_size );
                 FILE *temp = fopen( tpath, "wb" );
 
                 /** Read data in 64kb chunks */
@@ -743,6 +766,57 @@ int main( int argc, char **argv ) {
                 fclose( temp );
                 break;
             }
+            // digs.bin have this type, unpack encrypted
+            case 24: {
+                //Construct output path
+                memset( tpath, 0, 1024 );
+                memcpy( tpath, index_table + filerec->filename_offset - metadata.index_table_offset, filerec->filename_size );
+                if (strstr(tpath, "digs.bin")){
+                    snprintf( "%s%ssce_sys/package/body.bin", output_dir, PATH_SEPARATOR_STR );
+
+                    pkg_seek( pkg, filerec->data_offset + pkg->header.data_offset );
+                    printf( "File body.bin, size %llu\n", filerec->data_size );
+                    FILE *temp = fopen( tpath, "wb" );
+
+                    /** Read data in 64kb chunks */
+                    uint8_t *data = (unsigned char *) malloc( sizeof( unsigned char ) * 0x10000 );
+                    if ( data ) {
+                        uint64_t left = filerec->data_size;
+                        while ( left > 0 ) {
+                            /** read file data */
+                            size_t required = ulmin( left, 0x10000 );
+                            // Bypass automatic decryption
+                            int read = fread( data, 1, required, pkg->stream );
+
+                            if ( read > 0 ) {
+                                /** write file data */
+                                int written = 0;
+                                while ( written < read )
+                                    written += fwrite( data + written, sizeof( unsigned char ), read - written, temp );
+
+                                left -= read;
+                            } else {
+                                fprintf( stderr, "Out of info to read!! Left %d\n", left );
+                                break;
+                            }
+                        }
+
+                        free( data );
+                    } else {
+                        fprintf( stderr, "Failed to allocate output buffer for file unpacking." );
+                        exit( 2 );
+                    }
+
+                    fclose( temp );
+
+
+                } else {
+                    fprintf( stderr, "Filetype is 0x18, but file is not a digs.bin, decrypting in default mode." );
+                    goto normal_file_decrypt;
+                }
+
+                break;
+            }
             default:
                 printf( "Unknown record type %d.\n", filerec->flags & 0xff );
                 break;
@@ -755,19 +829,10 @@ int main( int argc, char **argv ) {
         //Output sce_sys/package directory (dump directly, bypassing decryption)
         //	head.bin (from 0 to pkg->header.data_offset + metadata.index_table_size)
         //  tail.bin (from pkg->header.data_offset + pkg->header.data_size to EOF)
+        //  body.bin (encrypted digs.bin file data)
         //  work.bin (reconstruction from key or or decompressed zRIF)
         //  temp.bin (unpacked in the course of package unpacking)
         {
-
-            //First create sce_sys/package directory in the output, so our spoils is not lost in space-time
-            snprintf( tpath, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package" );
-            if ( mkdirs( tpath ) < 0 ) {
-                fprintf( stderr, "Can't create directory %s.\n", tpath );
-                if ( errno != 0 )
-                    perror( "Error" );
-                exit( 1 );
-            }
-
             //head.bin
             size_t length = pkg->header.data_offset + metadata.index_table_size;
             uint8_t *data = malloc( length );
