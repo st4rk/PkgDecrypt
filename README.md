@@ -73,7 +73,7 @@ Bugfixes:
 * St4rk Initial code
 
 # ToDo list:
-* Fix DLC extraction, 
+* Found out exactly how body.bin and stat.bin created.
 
 # Thanks
 St4rkDev for his wonderful code,
