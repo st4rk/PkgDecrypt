@@ -231,19 +231,29 @@ int main( int argc, char **argv ) {
 
         //Determine PKG content type
         int is_dlc = 0;
+        int is_patch = 0;
         switch ( pkg->metadata.content_type ) {
         case 0x16:
             //DLC content for Vita
             is_dlc = 1;
-            printf( "Package contains DLC content, content id %s\n", pkg->header.content_id );
+            printf( "Package contains PS Vita DLC content, content id %s\n", pkg->header.content_id );
             break;
         case 0x15:
             //Game content
-            printf( "Package contains Vita Game, content id %s\n", pkg->header.content_id );
+            //Check sfo to distinguish between game data and game patch
+            if ( strcmp( psfGetString( pkg->sfo_file, "CATEGORY" ), "gp" ) == 0 ) {
+                is_patch = 1;
+                printf( "Package contains Patch for PS Vita Game, content id %s\n", pkg->header.content_id );
+            } else {
+                printf( "Package contains PS Vita Game, content id %s\n", pkg->header.content_id );
+            }
             break;
         case 0x18:
             //PSM package
             printf( "Package contains PSM application, content id %s\n", pkg->header.content_id );
+            break;
+        case 0x1f:
+            printf( "Package contains PS Vita Theme, content id %s\n", pkg->header.content_id );
             break;
         default:
             //Unknown content
@@ -312,7 +322,7 @@ int main( int argc, char **argv ) {
                 struct stat st = {0};
                 is_dlc = 1;
                 do {
-                    snprintf( sub, 600, "%08d", is_dlc++ );
+                    snprintf( sub, 600, "%08x", is_dlc++ );
                 } while ( stat( temp, &st ) != -1 );
 
                 //Put DLC data in the game id folder
@@ -321,7 +331,10 @@ int main( int argc, char **argv ) {
 
             } else {
                 pkg->header.content_id[16] = '\0';
-                snprintf( temp, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "app", PATH_SEPARATOR_STR, pkg->header.content_id + 7 );
+                snprintf( temp, 1024, "%s%s%s%s%s",
+                          output_dir, PATH_SEPARATOR_STR,
+                          ( is_patch ? "patch" : "app" ), PATH_SEPARATOR_STR,
+                          pkg->header.content_id + 7 );
                 pkg->header.content_id[16] = '_';
             }
             output_dir = temp;
