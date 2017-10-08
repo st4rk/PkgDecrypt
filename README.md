@@ -36,6 +36,9 @@ To create new, zRIF license, use the make_key.
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.2.1.0
+* Corrects unpacking folder for the game patches in `ux` mode,
+* Fixed bug that occured if there was more than 10 DLCs extracted in `/bgdl/t/` directory
 ### 1.2.0.0
 * Added generation of `PDB` files for DLC package installation.
 ### 1.1.3.0
