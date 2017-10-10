@@ -20,7 +20,7 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 2
-#define VERSION_PATCH 0
+#define VERSION_PATCH 2
 
 int decode_license( char *encoded, uint8_t *target ) {
     //First check encoded buffer
@@ -121,6 +121,7 @@ int main( int argc, char **argv ) {
     char *encoded_license = NULL;
     int md_mode = 0;
     int raw_mode = 0;
+    int split_dirs = 0;
 
     int position = 0;
     for ( int i = 1; i < argc; i++ ) {
@@ -142,6 +143,9 @@ int main( int argc, char **argv ) {
         } else {
             if ( strcmp( argv[i], "--raw" ) == 0 ) {
                 raw_mode = 1;
+                continue;
+            } else if (strcmp(argv[i], "--split") == 0){
+                split_dirs = 1;
                 continue;
             }
         positional_arg:
@@ -320,10 +324,25 @@ int main( int argc, char **argv ) {
 
                 //Check first usable folder in sequence 00000000->99999999
                 struct stat st = {0};
-                is_dlc = 1;
+                int next_dir = 1;
+                int next_slot = 1;
                 do {
-                    snprintf( sub, 600, "%08x", is_dlc++ );
+                    if (next_slot >= 0x20){
+                        if (split_dirs){
+                            snprintf( temp, 1024, "%s%sbgdl_%d%st%s", output_dir, PATH_SEPARATOR_STR, next_dir++, PATH_SEPARATOR_STR, PATH_SEPARATOR_STR );
+                            sub = strlen( temp ) + temp;
+                            next_slot = 1;
+                        } else {
+                            fprintf( stderr, "Error: Too many DLCs in the output directory already!\n" );
+                            exit( 1 );
+                        }
+                    }
+                    snprintf( sub, 600, "%08x", next_slot++ );
                 } while ( stat( temp, &st ) != -1 );
+
+                //Warn user if we were forced to create another output directory and redirect content
+                if (next_dir > 1)
+                    fprintf( stderr, "Too many DLCs in the original output directory, placing new in the %s\n", temp );
 
                 //Put DLC data in the game id folder
                 sub = strlen( temp ) + temp;
