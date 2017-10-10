@@ -20,6 +20,7 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 				Two formats accepted - klicensee key (deprecated) and zRIF (recommended)
 				zRIF could be made by NoNpDrm fake RIFs using make_key
 	--raw			Output fully decrypted PKG instead of unpacking it, exclusive
+	--split			Redirect output to another directory if there is no place in current
 	<filename.pkg>		Input PKG file
 	<output_directory>	Directory where all files will be places. Current directory by default.
 ```
@@ -36,6 +37,9 @@ To create new, zRIF license, use the make_key.
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.2.2.0
+* Improvements in DLC unpacking mode.
+* Now using command-line tools for windows build.
 ### 1.2.0.0
 * Added generation of `PDB` files for DLC package installation.
 ### 1.1.3.0
@@ -74,6 +78,7 @@ Bugfixes:
 
 # ToDo list:
 * Found out exactly how body.bin and stat.bin created.
+* Add minGW build support
 
 # Thanks
 St4rkDev for his wonderful code,

@@ -683,6 +683,7 @@ int main( int argc, char **argv ) {
         printf( "\t--make-dirs=id|ux\tUse output directory to create special hierarchy,\n\t\t\t\tid\tplaces all output in the <CONTENTID> folder\n\t\t\t\tux\tplaces all output in ux0-style hierarchy\n" );
         printf( "\t--license=<key>\t\tProvide key to use as base for work.bin (*.rif) file creation.\n\t\t\t\tTwo formats accepted - klicensee key (deprecated) and zRIF (recommended)\n\t\t\t\tzRIF could be made by NoNpDrm fake RIFs using make_key\n" );
         printf( "\t--raw\t\t\tOutput fully decrypted PKG instead of unpacking it, exclusive\n" );
+        printf( "\t--split\t\t\tRedirect output to another directory if there is no place in current\n" );
         printf( "\t<filename.pkg>\t\tInput PKG file\n" );
         printf( "\t<output_directory>\tDirectory where all files will be places. Current directory by default.\n" );
     }
