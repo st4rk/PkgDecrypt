@@ -40,6 +40,9 @@ To create new, zRIF license, use the make_key.
 ### 1.2.2.0
 * Improvements in DLC unpacking mode.
 * Now using command-line tools for windows build.
+### 1.2.1.0
+* Corrects unpacking folder for the game patches in `ux` mode,
+* Fixed bug that occured if there was more than 10 DLCs extracted in `/bgdl/t/` directory
 ### 1.2.0.0
 * Added generation of `PDB` files for DLC package installation.
 ### 1.1.3.0
