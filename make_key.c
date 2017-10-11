@@ -24,7 +24,7 @@ int main( int argc, char **argv ) {
             FILE *lic = fopen( argv[i], "rb" );
             if ( lic ) {
                 char key[512];
-                size_t len = fread( key, 1, 512, lic );
+                int len = fread( key, 1, 512, lic );
                 if ( len < 512 ) {
                     printf( "Error: %s is not a valid (or supported) license key (size mismatch).\n", argv[i] );
                 } else {
@@ -45,7 +45,7 @@ int main( int argc, char **argv ) {
                     if ( ( len = deflateKey( (unsigned char *) key, out, 512 ) ) < 0 ) {
                         printf( "Error: %s failed to compress.\n", argv[i] );
                     } else {
-                        printf( "Compressed key to %llu bytes.\n", len );
+                        printf( "Compressed key to %d bytes.\n", len );
 
                         //Align len to 3 byte block to avoid padding by base64
                         if ( ( len % 3 ) > 0 ) len += 3 - ( len % 3 );

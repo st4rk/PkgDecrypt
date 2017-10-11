@@ -144,7 +144,7 @@ int main( int argc, char **argv ) {
             if ( strcmp( argv[i], "--raw" ) == 0 ) {
                 raw_mode = 1;
                 continue;
-            } else if (strcmp(argv[i], "--split") == 0){
+            } else if ( strcmp( argv[i], "--split" ) == 0 ) {
                 split_dirs = 1;
                 continue;
             }
@@ -327,8 +327,8 @@ int main( int argc, char **argv ) {
                 int next_dir = 1;
                 int next_slot = 1;
                 do {
-                    if (next_slot >= 0x20){
-                        if (split_dirs){
+                    if ( next_slot >= 0x20 ) {
+                        if ( split_dirs ) {
                             snprintf( temp, 1024, "%s%sbgdl_%d%st%s", output_dir, PATH_SEPARATOR_STR, next_dir++, PATH_SEPARATOR_STR, PATH_SEPARATOR_STR );
                             sub = strlen( temp ) + temp;
                             next_slot = 1;
@@ -341,7 +341,7 @@ int main( int argc, char **argv ) {
                 } while ( stat( temp, &st ) != -1 );
 
                 //Warn user if we were forced to create another output directory and redirect content
-                if (next_dir > 1)
+                if ( next_dir > 1 )
                     fprintf( stderr, "Too many DLCs in the original output directory, placing new in the %s\n", temp );
 
                 //Put DLC data in the game id folder
@@ -630,40 +630,44 @@ int main( int argc, char **argv ) {
             //PDB files for dlcs
             if ( is_dlc ) {
                 uint8_t *pkgdb = malloc( 0x2000 );
-                uint32_t dblen = pkgdbGenerate( pkgdb, 0x2000,
-                                                psfGetString( pkg->sfo_file, "TITLE" ),
-                                                psfGetString( pkg->sfo_file, "TITLE_ID" ),
-                                                /* TODO basename of pkg */ NULL,
-                                                /* TODO pkg url from args */ NULL,
-                                                pkg->header.total_size,
-                                                is_dlc - 1 );
+                if ( pkgdb ) {
+                    uint32_t dblen = pkgdbGenerate( pkgdb, 0x2000,
+                                                    psfGetString( pkg->sfo_file, "TITLE" ),
+                                                    psfGetString( pkg->sfo_file, "TITLE_ID" ),
+                                                    /* TODO basename of pkg */ NULL,
+                                                    /* TODO pkg url from args */ NULL,
+                                                    pkg->header.total_size,
+                                                    is_dlc - 1 );
 
-                char *sub;
-                strcpy( temp, output_dir );
+                    char *sub;
+                    strcpy( temp, output_dir );
 
-                if ( md_mode == 2 )
-                    sub = strrchr( temp, PATH_SEPARATOR );
-                else
-                    sub = temp + strlen( temp );
+                    if ( md_mode == 2 )
+                        sub = strrchr( temp, PATH_SEPARATOR );
+                    else
+                        sub = temp + strlen( temp );
 
-                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d0.pdb" );
-                if ( !writeFile( temp, pkgdb, dblen ) ) {
-                    fprintf( stderr, "Can't write out %s!\n", temp );
-                } else
-                    printf( "File %s\n", temp );
+                    snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d0.pdb" );
+                    if ( !writeFile( temp, pkgdb, dblen ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    } else
+                        printf( "File %s\n", temp );
 
-                pkgdb[0x20] = 0;
-                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d1.pdb" );
-                if ( !writeFile( temp, pkgdb, dblen ) ) {
-                    fprintf( stderr, "Can't write out %s!\n", temp );
-                } else
-                    printf( "File %s\n", temp );
+                    pkgdb[0x20] = 0;
+                    snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d1.pdb" );
+                    if ( !writeFile( temp, pkgdb, dblen ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    } else
+                        printf( "File %s\n", temp );
 
-                snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "f0.pdb" );
-                if ( !writeFile( temp, NULL, 0 ) ) {
-                    fprintf( stderr, "Can't write out %s!\n", temp );
-                } else
-                    printf( "File %s\n", temp );
+                    snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "f0.pdb" );
+                    if ( !writeFile( temp, NULL, 0 ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    } else
+                        printf( "File %s\n", temp );
+                } else {
+                    fprintf( stderr, "Error: Can't allocate memory to create PDB files.\n" );
+                }
             }
         }
 

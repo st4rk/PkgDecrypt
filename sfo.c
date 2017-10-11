@@ -16,7 +16,7 @@ typedef struct
 } _PSF_ITEM;
 
 typedef struct {
-    char *buffer;
+    uint8_t *buffer;
     uint32_t item_count;
     _PSF_ITEM *item;
 } _PSF;
