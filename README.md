@@ -32,7 +32,8 @@ To create new, zRIF license, use the make_key.
 
 
 # Requirements
-* Windows x64(for precompiled build) or other supported OS,
+* Windows x64 or x86 (for precompiled builds) or other supported OS,
+* VC++ Redist 2017 installed,
 * a)Vita with 3.60 henkaku, PKG file and license key[klicensee(deprecated) or zRIF(recommended)] for Vita installation,
 * b)PKG file for extraction purposes only.
 
@@ -42,7 +43,8 @@ To create new, zRIF license, use the make_key.
 * Fixed bug in sfo parser related to string-type fields.
 ### 1.2.2.0
 * Improvements in DLC unpacking mode,
-* Now using command-line tools for windows build.
+* Now using command-line tools for windows build,
+* Since this version x86 precompiled builds are also available.
 ### 1.2.1.0
 * Corrects unpacking folder for the game patches in `ux` mode,
 * Fixed bug that occured if there was more than 10 DLCs extracted in `/bgdl/t/` directory
