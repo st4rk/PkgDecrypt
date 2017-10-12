@@ -640,31 +640,31 @@ int main( int argc, char **argv ) {
                                                     is_dlc - 1 );
 
                     char *sub;
-                    strcpy( temp, output_dir );
+                    strcpy( tpath, output_dir );
 
                     if ( md_mode == 2 )
-                        sub = strrchr( temp, PATH_SEPARATOR );
+                        sub = strrchr( tpath, PATH_SEPARATOR );
                     else
-                        sub = temp + strlen( temp );
+                        sub = tpath + strlen( tpath );
 
                     snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d0.pdb" );
-                    if ( !writeFile( temp, pkgdb, dblen ) ) {
-                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    if ( !writeFile( tpath, pkgdb, dblen ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", tpath );
                     } else
-                        printf( "File %s\n", temp );
+                        printf( "File %s\n", tpath );
 
                     pkgdb[0x20] = 0;
                     snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "d1.pdb" );
-                    if ( !writeFile( temp, pkgdb, dblen ) ) {
-                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    if ( !writeFile( tpath, pkgdb, dblen ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", tpath );
                     } else
-                        printf( "File %s\n", temp );
+                        printf( "File %s\n", tpath );
 
                     snprintf( sub, 600, "%s%s", PATH_SEPARATOR_STR, "f0.pdb" );
-                    if ( !writeFile( temp, NULL, 0 ) ) {
-                        fprintf( stderr, "Can't write out %s!\n", temp );
+                    if ( !writeFile( tpath, NULL, 0 ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", tpath );
                     } else
-                        printf( "File %s\n", temp );
+                        printf( "File %s\n", tpath );
                 } else {
                     fprintf( stderr, "Error: Can't allocate memory to create PDB files.\n" );
                 }
