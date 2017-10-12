@@ -37,8 +37,11 @@ To create new, zRIF license, use the make_key.
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.2.3.0
+* Fixed bug with macOS build, thanks to @kkaazzee,
+* Fixed bug in sfo parser related to string-type fields.
 ### 1.2.2.0
-* Improvements in DLC unpacking mode.
+* Improvements in DLC unpacking mode,
 * Now using command-line tools for windows build.
 ### 1.2.1.0
 * Corrects unpacking folder for the game patches in `ux` mode,
