@@ -102,17 +102,21 @@ static int findItemIndex( _PSF *psf, const char *name ) {
 }
 
 char *psfGetString( PSF psf, const char *name ) {
-    int index = findItemIndex( (_PSF *) psf, name );
-    if ( index >= 0 ) {
-        return (char *) ( ( (_PSF *) psf )->item[index].value );
+    if ( psf ) {
+        int index = findItemIndex( (_PSF *) psf, name );
+        if ( index >= 0 ) {
+            return (char *) ( ( (_PSF *) psf )->item[index].value );
+        }
     }
-    return NULL;
+    return "";
 }
 
 int psfGetInt( PSF psf, const char *name ) {
-    int index = findItemIndex( (_PSF *) psf, name );
-    if ( index >= 0 ) {
-        return *( (int *) ( ( (_PSF *) psf )->item[index].value ) );
+    if ( psf ) {
+        int index = findItemIndex( (_PSF *) psf, name );
+        if ( index >= 0 ) {
+            return *( (int *) ( ( (_PSF *) psf )->item[index].value ) );
+        }
     }
     return 0;
 }
