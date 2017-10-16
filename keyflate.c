@@ -40,7 +40,7 @@ static const unsigned char g_dict[] =
 int deflateKey( const uint8_t *license, uint8_t *out, size_t out_size ) {
     int result = 0;
     z_streamp z_str = malloc( sizeof( z_stream ) );
-    z_str->next_in = license;
+    z_str->next_in = (Bytef*) license;
     z_str->avail_in = 512;
     z_str->next_out = out;
     z_str->avail_out = out_size;
@@ -70,7 +70,7 @@ int deflateKey( const uint8_t *license, uint8_t *out, size_t out_size ) {
 int inflateKey( const uint8_t *in, size_t in_size, uint8_t *license ) {
     int result = 0;
     z_streamp z_str = malloc( sizeof( z_stream ) );
-    z_str->next_in = in;
+    z_str->next_in = (Bytef*) in;
     z_str->avail_in = in_size;
     z_str->next_out = license;
     z_str->avail_out = 512;

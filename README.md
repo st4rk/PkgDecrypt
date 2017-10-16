@@ -20,17 +20,43 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 				Two formats accepted - klicensee key (deprecated) and zRIF (recommended)
 				zRIF could be made by NoNpDrm fake RIFs using make_key
 	--raw			Output fully decrypted PKG instead of unpacking it, exclusive
+	--split			Redirect output to another directory if there is no place in current
 	<filename.pkg>		Input PKG file
 	<output_directory>	Directory where all files will be places. Current directory by default.
+```
+To create new, zRIF license, use the make_key.
+
+```
+        make_key license_file
 ```
 
 
 # Requirements
-* Windows x64(for precompiled build) or other supported OS,
+* Windows x64 or x86 (for precompiled builds) or other supported OS,
+* VC++ Redist 2017 installed,
 * a)Vita with 3.60 henkaku, PKG file and license key[klicensee(deprecated) or zRIF(recommended)] for Vita installation,
 * b)PKG file for extraction purposes only.
 
 # Changelog:
+### 1.2.3.0
+* Fixed bug with macOS build, thanks to @kkaazzee,
+* Fixed bug in sfo parser related to string-type fields.
+### 1.2.2.0
+* Improvements in DLC unpacking mode,
+* Now using command-line tools for windows build,
+* Since this version x86 precompiled builds are also available.
+### 1.2.1.0
+* Corrects unpacking folder for the game patches in `ux` mode,
+* Fixed bug that occured if there was more than 10 DLCs extracted in `/bgdl/t/` directory
+### 1.2.0.0
+* Added generation of `PDB` files for DLC package installation.
+### 1.1.3.0
+* Fixed bug which prevented creation of `sce_sys/package` directory contents for some PKGs.
+* Changed directory layout of `ux` mode for DLC packages.
+### 1.1.2.0
+* Fixed bug with PSM PKG unpacking.
+### 1.1.1.0
+* Bug fixes.
 ### 1.1.0.0
 New features:
 - Support of generating fake RIFs from hex-encoded klicensee and zRIFs
@@ -59,7 +85,8 @@ Bugfixes:
 * St4rk Initial code
 
 # ToDo list:
-* Fix DLC extraction, 
+* Found out exactly how body.bin and stat.bin created.
+* Add minGW build support
 
 # Thanks
 St4rkDev for his wonderful code,
@@ -68,6 +95,6 @@ TheRadziu for PR, team management and testing,
 
 Atrexia for supporting us with this idea, 
 
-FatalErrorX for providing me with all files necessary for debug and PoC testing,
+FatalErrorX for providing us with all files necessary for debug and PoC testing,
 
 Brandonheat8 for the icon.
