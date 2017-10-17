@@ -33,9 +33,16 @@ To create new, zRIF license, use the make_key.
 
 # Requirements
 * Windows x64 or x86 (for precompiled builds) or other supported OS,
-* VC++ Redist 2017 installed,
+* VC++ Redist 2017 installed (not needed if using CMake),
 * a)Vita with 3.60 henkaku, PKG file and license key[klicensee(deprecated) or zRIF(recommended)] for Vita installation,
 * b)PKG file for extraction purposes only.
+
+# Compile
+
+```
+mkdir build && cd build && cmake .. && make
+sudo make install # For Linux and Mac
+```
 
 # Changelog:
 ### 1.2.3.0
