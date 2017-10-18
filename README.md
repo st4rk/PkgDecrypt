@@ -45,6 +45,9 @@ sudo make install # For Linux and Mac
 ```
 
 # Changelog:
+### 1.3.0.0
+* Corrected directory layout for PSM in "ux" mode,
+* Updated make_key to support PSM RIFs.
 ### 1.2.3.0
 * Fixed bug with macOS build, thanks to @kkaazzee,
 * Fixed bug in sfo parser related to string-type fields.
@@ -93,7 +96,7 @@ Bugfixes:
 
 # ToDo list:
 * Found out exactly how body.bin and stat.bin created.
-* Add minGW build support
+* Full PSM support.
 
 # Thanks
 St4rkDev for his wonderful code,
