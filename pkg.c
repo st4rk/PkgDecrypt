@@ -196,7 +196,9 @@ PKG_FILE_STREAM *pkg_open( const char *path ) {
 			}
 
 			stream->sfo_file = psfParse(sfo_buf);
-		}
+		} else {
+            stream->sfo_file = NULL;
+        }
 
         //Prepare to read first block of encrypted data
         stream->file_pos = (off64_t) stream->header.data_offset;

@@ -19,8 +19,11 @@
 #include <string.h>
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 2
-#define VERSION_PATCH 3
+#define VERSION_MINOR 3
+#define VERSION_PATCH 0
+
+#define MIN_KEY_SIZE 512
+#define MAX_KEY_SIZE 2048
 
 int decode_license( char *encoded, uint8_t *target ) {
     //First check encoded buffer
@@ -32,13 +35,13 @@ int decode_license( char *encoded, uint8_t *target ) {
         }
     }
     if ( deflated ) {
-        char buf[512];
+        char buf[MAX_KEY_SIZE];
         base64_decodestate state;
         base64_init_decodestate( &state );
         size_t len = base64_decode_block( encoded, strlen( encoded ), buf, &state );
 
         len = inflateKey( (unsigned char *) buf, len, target );
-        if ( len != 512 ) {
+        if ( len < MIN_KEY_SIZE ) {
             return -1;
         }
         return 0;
@@ -57,6 +60,22 @@ int decode_license( char *encoded, uint8_t *target ) {
         }
         return 1;
     }
+}
+
+int get_license_type( uint8_t *lic ) {
+    if ( *( (uint16_t *) ( lic + 4 ) ) == 0 ) {
+        return 1;
+    }
+    return 0;
+}
+
+char *strrep( char *text, char *substr, char *subst ) {
+    char *loc = strstr( text, substr );
+    if ( loc >= 0 ) {
+        memmove( loc + strlen( subst ), loc + strlen( substr ), strlen( loc ) - strlen( substr ) + 1 );
+        memcpy( loc, subst, strlen( subst ) );
+    }
+    return loc;
 }
 
 int mkdirs( char *path ) {
@@ -227,7 +246,8 @@ int main( int argc, char **argv ) {
             exit( 0 );
         }
 
-        printf( "Package content title: %s\n", psfGetString( pkg->sfo_file, "TITLE" ) );
+        if ( pkg->sfo_file )
+            printf( "Package content title: %s\n", psfGetString( pkg->sfo_file, "TITLE" ) );
         printf( "Package metatdata:\n\tDRM type: 0x%X\n\tContent type: 0x%X\n\tPackage flags: 0x%X\n",
                 pkg->metadata.drm_type,
                 pkg->metadata.content_type,
@@ -236,6 +256,7 @@ int main( int argc, char **argv ) {
         //Determine PKG content type
         int is_dlc = 0;
         int is_patch = 0;
+        int is_psm = 0;
         switch ( pkg->metadata.content_type ) {
         case 0x16:
             //DLC content for Vita
@@ -254,6 +275,7 @@ int main( int argc, char **argv ) {
             break;
         case 0x18:
             //PSM package
+            is_psm = 1;
             printf( "Package contains PSM application, content id %s\n", pkg->header.content_id );
             break;
         case 0x1f:
@@ -267,8 +289,8 @@ int main( int argc, char **argv ) {
 
         //Decode provided license (if any provided)
         if ( encoded_license ) {
-            uint8_t *ltext = malloc( 512 );
-            memset( ltext, 0, 512 );
+            uint8_t *ltext = malloc( MAX_KEY_SIZE );
+            memset( ltext, 0, MAX_KEY_SIZE );
 
             int result = decode_license( encoded_license, ltext );
             if ( result < 0 ) {
@@ -279,25 +301,47 @@ int main( int argc, char **argv ) {
                 //zRIF
                 encoded_license = (char *) ltext;
                 //Check content id
-                SceNpDrmLicense *lic = (SceNpDrmLicense *) ltext;
-                if ( strcmp( lic->content_id, pkg->header.content_id ) != 0 ) {
-                    fprintf( stderr, "Provided zRIF is not applicable to specified package.\nPackage content id: %s\nLicense content id: %s\n", pkg->header.content_id, lic->content_id );
-                    fprintf( stderr, "RIF file will not be written.\n" );
+                if ( get_license_type( encoded_license ) != is_psm ) {
+                    fprintf( stderr, "Incorrect license type provided, %s expected, but got %s.\n", ( is_psm ? "PsmDrm" : "NpDrm" ), ( is_psm ? "NpDrm" : "PsmDrm" ) );
                     free( ltext );
                     encoded_license = NULL;
+                } else if ( is_psm ) {
+                    ScePsmDrmLicense *lic = (ScePsmDrmLicense *) ltext;
+                    if ( strcmp( lic->content_id, pkg->header.content_id ) != 0 ) {
+                        fprintf( stderr, "Provided zRIF is not applicable to specified package.\nPackage content id: %s\nLicense content id: %s\n", pkg->header.content_id, lic->content_id );
+                        fprintf( stderr, "RIF file will not be written.\n" );
+                        free( ltext );
+                        encoded_license = NULL;
+                    } else {
+                        printf( "Successfully decompressed zRIF from provided license string.\n" );
+                    }
                 } else {
-                    printf( "Successfully decompressed zRIF from provided license string.\n" );
+                    SceNpDrmLicense *lic = (SceNpDrmLicense *) ltext;
+                    if ( strcmp( lic->content_id, pkg->header.content_id ) != 0 ) {
+                        fprintf( stderr, "Provided zRIF is not applicable to specified package.\nPackage content id: %s\nLicense content id: %s\n", pkg->header.content_id, lic->content_id );
+                        fprintf( stderr, "RIF file will not be written.\n" );
+                        free( ltext );
+                        encoded_license = NULL;
+                    } else {
+                        printf( "Successfully decompressed zRIF from provided license string.\n" );
+                    }
                 }
             } else if ( result == 1 ) {
                 //extracted klicensee - regenerate some flags
-                SceNpDrmLicense *lic = (SceNpDrmLicense *) ltext;
-                printf( "Regenerating RIF from license string.\n" );
-                memcpy( lic->content_id, pkg->header.content_id, 0x30 );
-                if ( pkg->metadata.drm_type == 0x3 || pkg->metadata.drm_type == 0xD ) {
-                    lic->sku_flag = __builtin_bswap32( 0x3 );
-                    printf( "Sku_flag (trial version promote) set.\n" );
+                if ( is_psm ) {
+                    fprintf( stderr, "Creating PsmDrm license from klicensee is not possible.\n" );
+                    free( ltext );
+                    encoded_license = NULL;
+                } else {
+                    SceNpDrmLicense *lic = (SceNpDrmLicense *) ltext;
+                    printf( "Regenerating RIF from license string.\n" );
+                    memcpy( lic->content_id, pkg->header.content_id, 0x30 );
+                    if ( pkg->metadata.drm_type == 0x3 || pkg->metadata.drm_type == 0xD ) {
+                        lic->sku_flag = __builtin_bswap32( 0x3 );
+                        printf( "Sku_flag (trial version promote) set.\n" );
+                    }
+                    encoded_license = (char *) ltext;
                 }
-                encoded_license = (char *) ltext;
             }
         }
 
@@ -352,7 +396,7 @@ int main( int argc, char **argv ) {
                 pkg->header.content_id[16] = '\0';
                 snprintf( temp, 1024, "%s%s%s%s%s",
                           output_dir, PATH_SEPARATOR_STR,
-                          ( is_patch ? "patch" : "app" ), PATH_SEPARATOR_STR,
+                          ( is_patch ? "patch" : ( is_psm ? "psm" : "app" ) ), PATH_SEPARATOR_STR,
                           pkg->header.content_id + 7 );
                 pkg->header.content_id[16] = '_';
             }
@@ -389,6 +433,7 @@ int main( int argc, char **argv ) {
         PKG_ITEM_RECORD *filerec = (PKG_ITEM_RECORD *) index_table;
         uint32_t record_count = pkg->header.item_count;
         printf( "Extracting %u records to %s...\n", record_count, output_dir );
+        char *t2 = malloc( 1024 );
         while ( record_count > 0 ) {
 
 #if ( __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ )
@@ -403,12 +448,12 @@ int main( int argc, char **argv ) {
             case 4:
             case 18: {
                 //Construct output path
-                snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
-                size_t idx = strlen( tpath );
-                memcpy( tpath + idx, index_table + filerec->filename_offset - pkg->metadata.index_table_offset, filerec->filename_size );
-                tpath[idx + filerec->filename_size] = '\0';
-
+                memcpy( t2, index_table + filerec->filename_offset - pkg->metadata.index_table_offset, filerec->filename_size );
+                t2[filerec->filename_size] = '\0';
+                if ( is_psm && md_mode == 2 ) strrep( t2, "contents", "RO" );
+                snprintf( tpath, 1024, "%s%s%s", output_dir, PATH_SEPARATOR_STR, t2 );
                 convertPath( tpath );
+
                 if ( mkdirs( tpath ) < 0 ) {
                     fprintf( stderr, "Can't create directory %s.\n", tpath );
                     if ( errno != 0 )
@@ -439,10 +484,10 @@ int main( int argc, char **argv ) {
             case 22: {
             //Construct output path
             decrypt_regular_file:
-                snprintf( tpath, 1024, "%s%s", output_dir, PATH_SEPARATOR_STR );
-                size_t idx = strlen( tpath );
-                memcpy( tpath + idx, index_table + filerec->filename_offset - pkg->metadata.index_table_offset, filerec->filename_size );
-                tpath[idx + filerec->filename_size] = '\0';
+                memcpy( t2, index_table + filerec->filename_offset - pkg->metadata.index_table_offset, filerec->filename_size );
+                t2[filerec->filename_size] = '\0';
+                if ( is_psm && md_mode == 2 ) strrep( t2, "contents", "RO" );
+                snprintf( tpath, 1024, "%s%s%s", output_dir, PATH_SEPARATOR_STR, t2 );
                 convertPath( tpath );
 
                 //Mark as requiring decryption
@@ -601,8 +646,12 @@ int main( int argc, char **argv ) {
 
             //work.bin
             if ( encoded_license ) {
-                //Now DLCs also use standard location in the package folder
-                snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package", PATH_SEPARATOR_STR, "work.bin" );
+                if ( is_psm ) {
+                    snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "RO", PATH_SEPARATOR_STR, "License", PATH_SEPARATOR_STR, "FAKE.rif" );
+                } else {
+                    //Now DLCs also use standard location in the package folder
+                    snprintf( tpath, 1024, "%s%s%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "sce_sys", PATH_SEPARATOR_STR, "package", PATH_SEPARATOR_STR, "work.bin" );
+                }
 
                 char *last = strrchr( tpath, PATH_SEPARATOR );
                 *last = '\0';
@@ -614,7 +663,7 @@ int main( int argc, char **argv ) {
                 }
                 *last = PATH_SEPARATOR;
 
-                length = 512;
+                length = is_psm ? ScePsmDrmLicenseSize : SceNpDrmLicenseSize;
                 FILE *workbin = fopen( tpath, "wb" );
                 if ( workbin ) {
                     fwrite( encoded_license, 1, length, workbin );
@@ -667,6 +716,49 @@ int main( int argc, char **argv ) {
                         printf( "File %s\n", tpath );
                 } else {
                     fprintf( stderr, "Error: Can't allocate memory to create PDB files.\n" );
+                }
+            }
+
+            //Additional directories for PSM
+            if ( is_psm && md_mode == 2 ) {
+                snprintf( tpath, 1024, "%s%s%s%s%s", output_dir, PATH_SEPARATOR_STR, "RW", PATH_SEPARATOR_STR, "Documents" );
+
+                if ( mkdirs( tpath ) < 0 ) {
+                    fprintf( stderr, "Can't create directory %s.\n", tpath );
+                    if ( errno != 0 )
+                        perror( "Error" );
+                    exit( 1 );
+                }
+
+                char *last = strrchr( tpath, PATH_SEPARATOR );
+                *( last + 1 ) = '\0';
+                strcat( tpath, "Temp" );
+
+                if ( mkdirs( tpath ) < 0 ) {
+                    fprintf( stderr, "Can't create directory %s.\n", tpath );
+                    if ( errno != 0 )
+                        perror( "Error" );
+                    exit( 1 );
+                }
+
+                last = strrchr( tpath, PATH_SEPARATOR );
+                *( last + 1 ) = '\0';
+                strcat( tpath, "System" );
+
+                if ( mkdirs( tpath ) < 0 ) {
+                    fprintf( stderr, "Can't create directory %s.\n", tpath );
+                    if ( errno != 0 )
+                        perror( "Error" );
+                    exit( 1 );
+                }
+
+                strcat( tpath, PATH_SEPARATOR_STR );
+                strcat( tpath, "content_id" );
+
+                if ( !writeFile( tpath, pkg->header.content_id, strlen( pkg->header.content_id ) ) ) {
+                    fprintf( stderr, "Can't write out %s!\n", tpath );
+                } else {
+                    printf( "File %s\n", tpath );
                 }
             }
         }
