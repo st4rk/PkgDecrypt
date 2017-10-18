@@ -45,6 +45,8 @@ sudo make install # For Linux and Mac
 ```
 
 # Changelog:
+### 1.3.1.0
+* Added `pm.dat` generator (required for PSM PKGs).
 ### 1.3.0.0
 * Corrected directory layout for PSM in "ux" mode,
 * Updated make_key to support PSM RIFs.

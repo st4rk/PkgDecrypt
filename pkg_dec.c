@@ -760,6 +760,21 @@ int main( int argc, char **argv ) {
                 } else {
                     printf( "File %s\n", tpath );
                 }
+
+                last = strrchr( tpath, PATH_SEPARATOR );
+                *( last + 1 ) = '\0';
+                strcat( tpath, "pm.dat" );
+
+                data = malloc( 0x10000 );
+                if ( data ) {
+                    if ( !writeFile( tpath, data, 0x10000 ) ) {
+                        fprintf( stderr, "Can't write out %s!\n", tpath );
+                    } else
+                        printf( "File %s\n", tpath );
+                    free( data );
+                } else {
+                    fprintf( stderr, "Error: Can't allocate memory to create pm.dat file.\n" );
+                }
             }
         }
 
