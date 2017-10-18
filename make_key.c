@@ -62,7 +62,7 @@ int main( int argc, char **argv ) {
 
                     unsigned char out[MAX_KEY_SIZE];
                     memset( out, 0, MAX_KEY_SIZE );
-                    if ( ( len = deflateKey( (unsigned char *) key, out, MAX_KEY_SIZE ) ) < 0 ) {
+                    if ( ( len = deflateKey( (unsigned char *) key, len, out, MAX_KEY_SIZE ) ) < 0 ) {
                         printf( "Error: %s failed to compress.\n", argv[i] );
                     } else {
                         printf( "Compressed key to %d bytes.\n", len );

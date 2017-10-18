@@ -20,7 +20,7 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 3
-#define VERSION_PATCH 0
+#define VERSION_PATCH 1
 
 #define MIN_KEY_SIZE 512
 #define MAX_KEY_SIZE 2048
@@ -40,7 +40,7 @@ int decode_license( char *encoded, uint8_t *target ) {
         base64_init_decodestate( &state );
         size_t len = base64_decode_block( encoded, strlen( encoded ), buf, &state );
 
-        len = inflateKey( (unsigned char *) buf, len, target );
+        len = inflateKey( (unsigned char *) buf, len, target, MAX_KEY_SIZE );
         if ( len < MIN_KEY_SIZE ) {
             return -1;
         }
