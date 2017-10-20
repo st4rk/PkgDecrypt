@@ -1,5 +1,4 @@
-/**
- * PS Vita PKG Decrypt
+/** 
  * Decrypts PS Vita PKG files
  * The code is a total mess, use at your own risk.
  * Written by St4rk
@@ -20,7 +19,7 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 3
-#define VERSION_PATCH 1
+#define VERSION_PATCH 2
 
 #define MIN_KEY_SIZE 512
 #define MAX_KEY_SIZE 2048
@@ -141,6 +140,7 @@ int main( int argc, char **argv ) {
     int md_mode = 0;
     int raw_mode = 0;
     int split_dirs = 0;
+    int queue_length = 32;
 
     int position = 0;
     for ( int i = 1; i < argc; i++ ) {
@@ -157,6 +157,13 @@ int main( int argc, char **argv ) {
                 }
             } else if ( strncmp( argv[i], "--license", splitp - argv[i] ) == 0 ) {
                 encoded_license = splitp + 1;
+            } else if (strncmp( argv[i], "--queue-length", splitp - argv[i]) == 0){
+                long int value = strtol( splitp + 1, NULL, 10 );
+                if (value <= 0){
+                    fprintf( stderr, "Install queue length must be greater than 0.\n" );
+                    exit( 1 );
+                }
+                queue_length = value;
             } else
                 goto positional_arg;
         } else {
@@ -371,7 +378,7 @@ int main( int argc, char **argv ) {
                 int next_dir = 1;
                 int next_slot = 1;
                 do {
-                    if ( next_slot >= 0x20 ) {
+                    if ( next_slot >= queue_length ) {
                         if ( split_dirs ) {
                             snprintf( temp, 1024, "%s%sbgdl_%d%st%s", output_dir, PATH_SEPARATOR_STR, next_dir++, PATH_SEPARATOR_STR, PATH_SEPARATOR_STR );
                             sub = strlen( temp ) + temp;
@@ -755,7 +762,7 @@ int main( int argc, char **argv ) {
                 strcat( tpath, PATH_SEPARATOR_STR );
                 strcat( tpath, "content_id" );
 
-                if ( !writeFile( tpath, pkg->header.content_id, strlen( pkg->header.content_id ) ) ) {
+                if ( !writeFile( tpath, pkg->header.content_id, 0x30 ) ) {
                     fprintf( stderr, "Can't write out %s!\n", tpath );
                 } else {
                     printf( "File %s\n", tpath );
@@ -766,6 +773,7 @@ int main( int argc, char **argv ) {
                 strcat( tpath, "pm.dat" );
 
                 data = malloc( 0x10000 );
+                memset(data, 0, 0x10000);
                 if ( data ) {
                     if ( !writeFile( tpath, data, 0x10000 ) ) {
                         fprintf( stderr, "Can't write out %s!\n", tpath );
@@ -790,11 +798,12 @@ int main( int argc, char **argv ) {
 
     } else {
         printf( "PkgDecrypt - tool to decrypt and extract PSVita PKG files.\n" );
-        printf( "Usage:\n\tpkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_directory] \nParameters:\n" );
+        printf( "Usage:\n\tpkg_dec [--make-dirs=id|ux] [--license=<key>] [--split] [--queue-length=<int>] [--raw] filename.pkg [output_directory] \nParameters:\n" );
         printf( "\t--make-dirs=id|ux\tUse output directory to create special hierarchy,\n\t\t\t\tid\tplaces all output in the <CONTENTID> folder\n\t\t\t\tux\tplaces all output in ux0-style hierarchy\n" );
         printf( "\t--license=<key>\t\tProvide key to use as base for work.bin (*.rif) file creation.\n\t\t\t\tTwo formats accepted - klicensee key (deprecated) and zRIF (recommended)\n\t\t\t\tzRIF could be made by NoNpDrm fake RIFs using make_key\n" );
+        printf( "\t--split\t\t\tCreates new directory to continue installation queue if limit reached\n" );
+        printf( "\t--queue-length=<int>\tMaximum length of install queue for DLCs to generate, default is 32\n" );
         printf( "\t--raw\t\t\tOutput fully decrypted PKG instead of unpacking it, exclusive\n" );
-        printf( "\t--split\t\t\tRedirect output to another directory if there is no place in current\n" );
         printf( "\t<filename.pkg>\t\tInput PKG file\n" );
         printf( "\t<output_directory>\tDirectory where all files will be places. Current directory by default.\n" );
     }
