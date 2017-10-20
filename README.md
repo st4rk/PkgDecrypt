@@ -28,7 +28,9 @@ pkg_dec [--make-dirs=id|ux] [--license=<key>] [--raw] filename.pkg [output_direc
 To create new, zRIF license, use the make_key.
 
 ```
-        make_key license_file
+make_key [--force] license_file...
+	--force		Use to skip the input file validation (and force old behavior)
+
 ```
 
 
@@ -46,6 +48,9 @@ sudo make install # For Linux and Mac
 ```
 
 # Changelog:
+### 1.3.2-1
+* make_key now validates input files and refuses to create key if it fails. New flag --force could be used if old behavior desired,
+* QoL only release.
 ### 1.3.2
 * Added `--queue-length` parameter to control maximum install queue length for DLCs.
 * PSM support bugfix.
@@ -102,7 +107,6 @@ Bugfixes:
 
 # ToDo list:
 * Found out exactly how body.bin and stat.bin created.
-* Full PSM support.
 
 # Thanks
 St4rkDev for his wonderful code,
