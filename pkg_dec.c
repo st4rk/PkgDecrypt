@@ -194,7 +194,7 @@ int main( int argc, char **argv ) {
 
         if ( pkg == NULL ) {
             if ( errno != 0 ) {
-                printf( "PKG %s is not a valid Vita PKG file!\n", input_file );
+                fprintf( stderr, "PKG %s is not a valid Vita PKG file!\n", input_file );
                 return -1;
             } else {
                 char error[1024];
