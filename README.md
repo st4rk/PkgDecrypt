@@ -5,7 +5,7 @@ Decrypts and extracts PS Vita PKG files.
 * zlib
 
 # Features
-* Fully supports: PSV titles, PSV updates, PSV DLCs (through /bgdl/ method) and PSM titles, 
+* Fully supports: PSV titles, PSV updates, PSV DLCs (through `/bgdl/` method) and PSM titles, 
 * 1:1 file extraction,
 * Support for klicensee and zRIF keys for work.bin 1:1 recreation,
 * Can either extract PKG or decrypt it into PKGS file,
@@ -107,9 +107,9 @@ Bugfixes:
 * St4rk Initial code
 
 # ToDo list:
-* Found out exactly how body.bin and stat.bin created,
-* Add support for VitaShell 1.76 DLC promotion/refresh (instead of `/bgdl/` method), 
-* Add PSX/PSP contents support to use through adrenaline. 
+- [ ]  Found out exactly how body.bin and stat.bin are created,
+- [ ]  Add support for VitaShell 1.76 DLC promotion/refresh (instead of `/bgdl/` method), 
+- [ ]  Add PSX/PSP contents support to use through adrenaline. 
 
 # Thanks
 St4rkDev for his wonderful code,
