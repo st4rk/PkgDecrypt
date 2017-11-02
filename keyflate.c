@@ -37,11 +37,11 @@ static const unsigned char g_dict[] =
         67, 48, 48, 48, 45, 80, 67, 83, 68, 48, 48, 48, 45, 80, 67, 83, 65, 48, 48, 48, 45, 80, 67, 83, 66, 48, 48,
         48, 0, 1, 0, 1, 0, 1, 0, 2, 239, 205, 171, 137, 103, 69, 35, 1, 0};
 
-int deflateKey( const uint8_t *license, uint8_t *out, size_t out_size ) {
+int deflateKey( const uint8_t *license, size_t in_size, uint8_t *out, size_t out_size ) {
     int result = 0;
     z_streamp z_str = malloc( sizeof( z_stream ) );
-    z_str->next_in = license;
-    z_str->avail_in = 512;
+    z_str->next_in = (Bytef*) license;
+    z_str->avail_in = in_size;
     z_str->next_out = out;
     z_str->avail_out = out_size;
     z_str->zalloc = Z_NULL;
@@ -67,13 +67,13 @@ int deflateKey( const uint8_t *license, uint8_t *out, size_t out_size ) {
     return result;
 }
 
-int inflateKey( const uint8_t *in, size_t in_size, uint8_t *license ) {
+int inflateKey( const uint8_t *in, size_t in_size, uint8_t *license, size_t out_size ) {
     int result = 0;
     z_streamp z_str = malloc( sizeof( z_stream ) );
-    z_str->next_in = in;
+    z_str->next_in = (Bytef*) in;
     z_str->avail_in = in_size;
     z_str->next_out = license;
-    z_str->avail_out = 512;
+    z_str->avail_out = out_size;
     z_str->zalloc = Z_NULL;
     z_str->zfree = Z_NULL;
     z_str->opaque = Z_NULL;

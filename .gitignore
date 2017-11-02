@@ -1,0 +1,5 @@
+build/
+pkg_dec
+make_key
+*.o
+*.a
